@@ -15,19 +15,34 @@ if (!url) {
   const schema = "board_test_" + Date.now().toString(36);
   const pool = new pg.Pool({ connectionString: url, max: 2 });
   const admin = new pg.Pool({ connectionString: url, max: 1 });
+  // On a Task & Tool machine the app's role owns one schema and cannot make
+  // another, and these tests must never run against the real tables; they
+  // skip there and run wherever a scratch schema can be made.
+  let usable = true;
+  let why = "";
+  const scratch = async (t: { skip: (m: string) => void }) => {
+    if (!usable) t.skip(why);
+    return usable;
+  };
 
   test.before(async () => {
-    await admin.query(`create schema ${schema}`);
-    pool.on("connect", (c) => { void c.query(`set search_path to ${schema}`); });
-    await pool.query("select 1");
+    try {
+      await admin.query(`create schema ${schema}`);
+      pool.on("connect", (c) => { void c.query(`set search_path to ${schema}`); });
+      await pool.query("select 1");
+    } catch (e) {
+      usable = false;
+      why = "TEST_DATABASE_URL's role cannot create a scratch schema: " + (e instanceof Error ? e.message : String(e));
+    }
   });
   test.after(async () => {
     await pool.end();
-    await admin.query(`drop schema ${schema} cascade`);
+    if (usable) await admin.query(`drop schema ${schema} cascade`);
     await admin.end();
   });
 
-  test("migrations and the seed are idempotent", async () => {
+  test("migrations and the seed are idempotent", async (t) => {
+    if (!(await scratch(t))) return;
     const first = await migrate(pool);
     assert.ok(first.includes("0001_schema.sql"));
     assert.deepEqual(await migrate(pool), []);
@@ -43,7 +58,8 @@ if (!url) {
     await pool.query(readFileSync("migrations/0001_schema.sql", "utf8"));
   });
 
-  test("a move renumbers both columns, keeps completed_at honest, and can be undone", async () => {
+  test("a move renumbers both columns, keeps completed_at honest, and can be undone", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
     const [todo, doing, done] = cols;
@@ -75,7 +91,8 @@ if (!url) {
     void doing;
   });
 
-  test("a done column change re-labels the cards in it", async () => {
+  test("a done column change re-labels the cards in it", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
     const doing = cols[1];
@@ -87,7 +104,8 @@ if (!url) {
     assert.equal((await Q.item(pool, x.id))!.completed_at, null);
   });
 
-  test("a column holding cards cannot be removed; a new column lands before Done", async () => {
+  test("a column holding cards cannot be removed; a new column lands before Done", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
     await assert.rejects(Q.archiveStatus(pool, cols[0].id), /still holds/);
@@ -100,7 +118,8 @@ if (!url) {
     assert.deepEqual((await Q.statuses(pool, board.id)).map((c) => c.key), ["todo", "doing", "done"]);
   });
 
-  test("attention ranks overdue, then urgent, then due today; finished cards never show", async () => {
+  test("attention ranks overdue, then urgent, then due today; finished cards never show", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
     const today = new Date().toISOString().slice(0, 10);
@@ -117,7 +136,8 @@ if (!url) {
     assert.ok(s.overdue >= 1);
   });
 
-  test("editing records what changed and drops the example mark; filters find by tag, assignee and search", async () => {
+  test("editing records what changed and drops the example mark; filters find by tag, assignee and search", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const sample = (await Q.items(pool, board.id)).find((i) => i.is_sample)!;
     const u = await Q.updateItem(pool, sample.id, { tags: ["Client"], assignee: "Sam@Example.com".toLowerCase(), title: sample.title }, "t@x");
@@ -133,7 +153,8 @@ if (!url) {
     assert.equal(await Q.updateItem(pool, sample.id, { title: sample.title }, "t@x").then((i) => i.updated_at.getTime()), u.updated_at.getTime(), "no change writes nothing");
   });
 
-  test("archive by age and sample removal", async () => {
+  test("archive by age and sample removal", async (t) => {
+    if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
     const d = await Q.createItem(pool, board.id, { title: "old done", status_id: cols[2].id }, "t@x");
@@ -146,5 +167,14 @@ if (!url) {
     const n = await Q.removeSamples(pool, board.id);
     assert.ok(n >= 1);
     assert.equal(await Q.sampleCount(pool, board.id), 0);
+  });
+
+  test("a new working column lands before two trailing done columns; a new done column joins the end", async (t) => {
+    if (!(await scratch(t))) return;
+    const b = await Q.createBoard(pool, "Jobs", "jobs");
+    const cols = await Q.statuses(pool, b.id);
+    await Q.createStatus(pool, b.id, "Paid", { is_done: true });
+    await Q.createStatus(pool, b.id, "Review");
+    assert.deepEqual((await Q.statuses(pool, b.id)).map((c) => c.key), [...cols.slice(0, -1).map((c) => c.key), "review", "done", "paid"]);
   });
 }

@@ -16,6 +16,10 @@ const ENV_FILE = "/home/sprite/.env";
 
 export type DbState = "no-url" | "connecting" | "migrating" | "ready" | "error";
 
+// On a Task & Tool machine the platform writes /home/sprite/.tasktool; there,
+// identity comes from the edge's header only and BOARD_USER is ignored.
+export const onPlatform = (): boolean => existsSync("/home/sprite/.tasktool");
+
 let pool: pg.Pool | null = null;
 let state: DbState = "no-url";
 let lastError = "";
@@ -49,7 +53,10 @@ export function isReady() {
 // limit is shared by every app in the project) and a connect budget of
 // twenty seconds, because a cold Neon endpoint takes a few seconds to wake.
 export function openPool(url: string): pg.Pool {
-  return new Pool({ connectionString: url, max: 4, connectionTimeoutMillis: 20_000, idleTimeoutMillis: 30_000 });
+  // pg already treats sslmode=require as verify-full and warns about the
+  // alias on every run; say verify-full outright so the scripts stay quiet.
+  const explicit = url.replace(/([?&])sslmode=(require|prefer|verify-ca)\b/, "$1sslmode=verify-full");
+  return new Pool({ connectionString: explicit, max: 4, connectionTimeoutMillis: 20_000, idleTimeoutMillis: 30_000 });
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

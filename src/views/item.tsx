@@ -31,7 +31,7 @@ export function ItemView({ data }: { data: ItemData }) {
         {!drawer ? null : <a href={url} class="text-label text-ink-3" title="Open as its own page">↗</a>}
       </div>
 
-      <form hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-2 flex flex-col gap-3">
+      <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-2 flex flex-col gap-3">
         <input name="title" value={item.title} required maxlength={200} disabled={ro} class="w-full rounded-control border border-transparent bg-transparent px-1 py-1 text-title font-semibold hover:border-line focus:border-line-strong focus:bg-surface" aria-label="Title" />
 
         <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-label sm:grid-cols-3">
@@ -109,7 +109,7 @@ export function ItemView({ data }: { data: ItemData }) {
       <section class="mt-4">
         <h3 class="text-label font-semibold text-ink-3">Comments and activity</h3>
         {!ro ? (
-          <form hx-post={`${url}/comment`} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2">
+          <form method="post" action={`${url}/comment`} hx-post={`${url}/comment`} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2">
             <input name="body" required maxlength={5000} placeholder="Write a comment" class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Comment" />
             <button class="rounded-control border border-line-strong px-3 py-1 text-label">Post</button>
           </form>
@@ -127,9 +127,9 @@ export function ItemView({ data }: { data: ItemData }) {
       {!ro ? (
         <div class="mt-4 flex gap-2 text-label">
           {item.archived_at ? (
-            <form hx-post={`${url}/restore`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1">Restore to {board.name}</button></form>
+            <form method="post" action={`${url}/restore`} hx-post={`${url}/restore`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1">Restore to {board.name}</button></form>
           ) : (
-            <form hx-post={`${url}/archive`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1 text-ink-2">Archive</button></form>
+            <form method="post" action={`${url}/archive`} hx-post={`${url}/archive`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1 text-ink-2">Archive</button></form>
           )}
         </div>
       ) : null}
@@ -145,14 +145,14 @@ function Checklist({ item, ro, target }: { item: Item; ro: boolean; target: stri
       <ol class="mt-1 flex flex-col gap-1 text-copy">
         {item.checklist.map((c, i) => (
           <li class="flex items-center gap-2">
-            <form hx-post={url} hx-target={target} hx-swap="outerHTML" class="flex items-center gap-2">
+            <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="flex items-center gap-2">
               <input type="hidden" name="action" value="toggle" />
               <input type="hidden" name="index" value={i} />
               <input type="checkbox" checked={c.done} disabled={ro} onchange="this.form.requestSubmit()" aria-label={c.text} />
             </form>
             <span class={c.done ? "text-ink-3 line-through" : ""}>{c.text}</span>
             {!ro ? (
-              <form hx-post={url} hx-target={target} hx-swap="outerHTML" class="ml-auto">
+              <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="ml-auto">
                 <input type="hidden" name="action" value="remove" />
                 <input type="hidden" name="index" value={i} />
                 <button class="px-1 text-ink-3 hover:text-ink" aria-label={`Remove ${c.text}`}>×</button>
@@ -162,7 +162,7 @@ function Checklist({ item, ro, target }: { item: Item; ro: boolean; target: stri
         ))}
       </ol>
       {!ro ? (
-        <form hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2 text-label">
+        <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2 text-label">
           <input type="hidden" name="action" value="add" />
           <input name="text" required maxlength={300} placeholder="Add a step" class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Checklist step" />
           <button class="rounded-control border border-line-strong px-3 py-1">Add</button>

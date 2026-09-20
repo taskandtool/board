@@ -4,7 +4,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { cfg } from "./config";
-import { db, dbState, isReady } from "./db/client";
+import { db, dbState, isReady, onPlatform } from "./db/client";
 import * as Q from "./db/queries";
 import type { Board, Filters, Item, Status } from "./db/queries";
 import { BoardView, Toast, type BoardData } from "./views/board";
@@ -22,7 +22,7 @@ const seen = new Map<string, number>();
 // and strips any copy a client sent, so the header is trusted here. Off
 // Task & Tool, BOARD_USER stands in. No header and no variable means read only.
 app.use("*", async (c, next) => {
-  const raw = c.req.header("x-tasktool-user") || process.env.BOARD_USER || "";
+  const raw = c.req.header("x-tasktool-user") || (onPlatform() ? "" : process.env.BOARD_USER || "");
   const user = /^[^\s@]+@[^\s@]+$/.test(raw) ? raw.toLowerCase() : null;
   c.set("user", user);
   c.header("Cache-Control", "no-store");
@@ -59,6 +59,8 @@ function sameOrigin(c: Context): boolean {
 }
 
 const isHx = (c: Context) => c.req.header("hx-request") === "true";
+// A `return` field is a path on this board, never a host: "//evil" is not a path.
+const localPath = (p: string, fallback: string) => (p.startsWith("/") && !p.startsWith("//") && !p.includes("\\") ? p : fallback);
 const num = (v: unknown) => (typeof v === "string" && /^\d+$/.test(v) ? Number(v) : NaN);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -96,7 +98,7 @@ async function boardResponse(c: Context<{ Variables: Vars }>, board: Board, toas
   const ret = str((await c.req.parseBody())["return"]);
   const filters = ret.startsWith(`/b/${board.key}`) ? filtersFromUrl(c, ret) : {};
   const data = await boardData(c, board, filters);
-  if (!isHx(c)) return c.redirect(ret.startsWith("/") ? ret : `/b/${board.key}`, 303);
+  if (!isHx(c)) return c.redirect(localPath(ret, `/b/${board.key}`), 303);
   c.header("HX-Trigger-After-Swap", "board-swapped");
   return c.html(<>
     <BoardView data={data} />
@@ -387,7 +389,7 @@ app.post("/items/:id/restore", async (c) => {
   await Q.restoreItem(db(), item.id, c.get("user"));
   const board = (await Q.boardById(db(), item.board_id))!;
   const ret = str((await c.req.parseBody())["return"]);
-  if (!isHx(c)) return c.redirect(ret.startsWith("/") ? ret : `/b/${board.key}`, 303);
+  if (!isHx(c)) return c.redirect(localPath(ret, `/b/${board.key}`), 303);
   if (c.req.header("hx-target") === "board") return boardResponse(c, board, { message: `Restored "${item.title}"` });
   return itemView(c, (await Q.item(db(), item.id))!);
 });

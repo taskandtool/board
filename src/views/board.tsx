@@ -54,7 +54,7 @@ export function BoardView({ data }: { data: BoardData }) {
               {user ? (
                 <details class="px-2 pb-2">
                   <summary class="cursor-pointer list-none rounded-control px-2 py-1 text-label text-ink-2 hover:bg-surface">+ Add {vocab.one.toLowerCase()}</summary>
-                  <form hx-post={`${base}/items`} hx-target="#board" hx-swap="outerHTML" class="mt-1 flex flex-col gap-1">
+                  <form method="post" action={`${base}/items`} hx-post={`${base}/items`} hx-target="#board" hx-swap="outerHTML" class="mt-1 flex flex-col gap-1">
                     <input type="hidden" name="status_id" value={col.id} />
                     <input type="hidden" name="return" value={refresh} />
                     <input name="title" required maxlength={200} placeholder="Title" class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label={`New ${vocab.one.toLowerCase()} title`} autofocus />
@@ -67,7 +67,7 @@ export function BoardView({ data }: { data: BoardData }) {
         })}
       </div>
       {user && samples > 0 ? (
-        <form hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-1 text-label text-ink-3">
+        <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-1 text-label text-ink-3">
           <input type="hidden" name="return" value={refresh} />
           {samples} example {samples === 1 ? "card explains" : "cards explain"} the board.{" "}
           <button class="underline">Remove the examples</button>
@@ -135,22 +135,22 @@ export function Card({ item, columns, board, user }: { item: Item; columns: Stat
             <summary class="cursor-pointer list-none rounded-control px-1 text-ink-3 opacity-60 hover:bg-panel hover:opacity-100 group-focus-within:opacity-100" aria-label={`Actions for ${item.title}`}>···</summary>
             <div class="absolute right-0 z-20 mt-1 flex w-48 flex-col rounded-card border border-line bg-surface p-1 text-label shadow-lift">
               {others.map((c) => (
-                <form hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
+                <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                   <input type="hidden" name="status_id" value={c.id} />
                   <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move to {c.label}</button>
                 </form>
               ))}
-              <form hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
+              <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                 <input type="hidden" name="status_id" value={col.id} />
                 <input type="hidden" name="direction" value="up" />
                 <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move up</button>
               </form>
-              <form hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
+              <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                 <input type="hidden" name="status_id" value={col.id} />
                 <input type="hidden" name="direction" value="down" />
                 <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move down</button>
               </form>
-              <form hx-post={`/items/${item.id}/archive`} hx-target="#board" hx-swap="outerHTML">
+              <form method="post" action={`/items/${item.id}/archive`} hx-post={`/items/${item.id}/archive`} hx-target="#board" hx-swap="outerHTML">
                 <button class="w-full rounded-control px-2 py-1 text-left text-ink-2 hover:bg-panel">Archive</button>
               </form>
             </div>
@@ -193,7 +193,7 @@ export function Toast({ message, undo }: { message: string; undo?: { url: string
       <div class="flex items-center gap-3 rounded-card border border-line bg-night px-4 py-2 text-label text-night-ink shadow-lift" data-toast>
         <span>{message}</span>
         {undo ? (
-          <form hx-post={undo.url} hx-target="#board" hx-swap="outerHTML">
+          <form method="post" action={undo.url} hx-post={undo.url} hx-target="#board" hx-swap="outerHTML">
             {Object.entries(undo.fields).map(([k, v]) => <input type="hidden" name={k} value={String(v)} />)}
             <button class="underline">Undo</button>
           </form>

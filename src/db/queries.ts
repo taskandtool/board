@@ -95,19 +95,18 @@ export async function statusByKey(q: Q, boardId: number, key: string): Promise<S
 export async function createStatus(q: Q, boardId: number, label: string, opts: { key?: string; wip_limit?: number | null; is_done?: boolean } = {}): Promise<Status> {
   const key = opts.key ?? slugify(label);
   if (!KEY.test(key)) throw new Error(`column key ${key} must be lowercase letters, digits, - or _`);
-  const pos = (await q.query<{ n: number }>("select coalesce(max(position), -1) + 1 as n from statuses where board_id = $1", [boardId])).rows[0].n;
-  // A done column at the end stays at the end: a new column lands before it.
-  const lastDone = (await q.query<Status>("select * from statuses where board_id = $1 and archived_at is null and is_done order by position desc limit 1", [boardId])).rows[0];
+  const cols = await statuses(q, boardId);
+  // A done column stays at the end: a new working column lands before the
+  // trailing run of done columns; a new done column joins the end.
+  let at = cols.length;
+  if (!opts.is_done) while (at > 0 && cols[at - 1].is_done) at--;
+  for (const c of cols.slice(at).reverse()) await q.query("update statuses set position = position + 1 where id = $1", [c.id]);
   const status = (await q.query<Status>(
     "insert into statuses (board_id, key, label, position, wip_limit, is_done) values ($1, $2, $3, $4, $5, $6) returning *",
-    [boardId, key, label, pos, opts.wip_limit ?? null, !!opts.is_done],
+    [boardId, key, label, at, opts.wip_limit ?? null, !!opts.is_done],
   )).rows[0];
-  if (lastDone && !opts.is_done && lastDone.position === pos - 1) {
-    await q.query("update statuses set position = $2 where id = $1", [status.id, lastDone.position]);
-    await q.query("update statuses set position = $2 where id = $1", [lastDone.id, pos]);
-    status.position = lastDone.position;
-  }
-  return status;
+  await q.query("with r as (select id, row_number() over (order by position, id) - 1 as rn from statuses where board_id = $1 and archived_at is null) update statuses set position = r.rn from r where statuses.id = r.id", [boardId]);
+  return (await statusById(q, status.id))!;
 }
 
 export async function updateStatus(q: Q, id: number, patch: { label?: string; wip_limit?: number | null; is_done?: boolean }): Promise<Status> {
@@ -387,9 +386,8 @@ export type Attention = { item: Item; why: string[] };
 export async function attention(q: Q, boardId: number): Promise<Attention[]> {
   const cols = await statuses(q, boardId);
   const first = cols[0]?.id;
-  const over = new Set(cols.filter((c) => c.wip_limit != null).filter((c) => false).map((c) => c.id));
   const counts = await columnCounts(q, boardId);
-  for (const c of cols) if (c.wip_limit != null && (counts.get(c.id) ?? 0) > c.wip_limit) over.add(c.id);
+  const over = new Set(cols.filter((c) => c.wip_limit != null && (counts.get(c.id) ?? 0) > c.wip_limit).map((c) => c.id));
   const rows = (await q.query<Item & { is_done: boolean }>(
     `select i.*, s.is_done from items i join statuses s on s.id = i.status_id where i.board_id = $1 and i.archived_at is null and not s.is_done ${ITEM_ORDER}`,
     [boardId],
