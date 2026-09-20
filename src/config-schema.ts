@@ -12,6 +12,7 @@ export type Config = {
   card: { fields: string[]; custom: CustomField[] };
   default_view: "board" | "list";
   archive_done_after_days: number;
+  time_zone: string;
 };
 
 const KEY = /^[a-z0-9][a-z0-9_-]{0,39}$/;
@@ -65,6 +66,22 @@ export function validate(raw: unknown): string[] {
   });
   if (c.default_view !== "board" && c.default_view !== "list") out.push("default_view must be board or list");
   if (!Number.isInteger(c.archive_done_after_days) || (c.archive_done_after_days as number) < 0) out.push("archive_done_after_days must be a whole number (0 turns the suggestion off)");
+  if (typeof c.time_zone !== "string" || !validTimeZone(c.time_zone)) out.push(`time_zone must be an IANA zone name such as "America/Chicago" or "UTC" (got ${JSON.stringify(c.time_zone)})`);
   return out;
 }
 
+
+export function validTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Today's date, YYYY-MM-DD, in the business's zone. Due dates are dates,
+// never instants, so "overdue" must be judged where the business is.
+export function todayIn(tz: string, now = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+}

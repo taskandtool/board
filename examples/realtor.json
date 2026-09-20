@@ -1,42 +1,109 @@
 {
   "business": "A two-agent residential real estate office; each card is one listing from signing to closing.",
-  "vocabulary": { "item": { "one": "Listing", "many": "Listings" } },
+  "vocabulary": {
+    "item": {
+      "one": "Listing",
+      "many": "Listings"
+    }
+  },
   "boards": [
     {
       "key": "listings",
       "name": "Listings",
       "columns": [
-        { "key": "coming-soon", "label": "Coming soon" },
-        { "key": "active", "label": "Active" },
-        { "key": "under-offer", "label": "Under offer" },
-        { "key": "closing", "label": "Closing" },
-        { "key": "closed", "label": "Closed", "is_done": true }
+        {
+          "key": "coming-soon",
+          "label": "Coming soon"
+        },
+        {
+          "key": "active",
+          "label": "Active"
+        },
+        {
+          "key": "under-offer",
+          "label": "Under offer"
+        },
+        {
+          "key": "closing",
+          "label": "Closing"
+        },
+        {
+          "key": "closed",
+          "label": "Closed",
+          "is_done": true
+        }
       ]
     },
     {
       "key": "buyers",
       "name": "Buyers",
       "columns": [
-        { "key": "new", "label": "New" },
-        { "key": "viewing", "label": "Viewing" },
-        { "key": "offering", "label": "Offering" },
-        { "key": "closed", "label": "Closed", "is_done": true }
+        {
+          "key": "new",
+          "label": "New"
+        },
+        {
+          "key": "viewing",
+          "label": "Viewing"
+        },
+        {
+          "key": "offering",
+          "label": "Offering"
+        },
+        {
+          "key": "closed",
+          "label": "Closed",
+          "is_done": true
+        }
       ]
     }
   ],
   "tags": [
-    { "name": "Price drop", "role": "tag-1" },
-    { "name": "Open house", "role": "tag-2" },
-    { "name": "Referral", "role": "tag-3" }
+    {
+      "name": "Price drop",
+      "role": "tag-1"
+    },
+    {
+      "name": "Open house",
+      "role": "tag-2"
+    },
+    {
+      "name": "Referral",
+      "role": "tag-3"
+    }
   ],
   "card": {
-    "fields": ["due_on", "assignee", "tags", "checklist", "customer_ref"],
+    "fields": [
+      "due_on",
+      "assignee",
+      "tags",
+      "checklist",
+      "customer_ref"
+    ],
     "custom": [
-      { "key": "address", "label": "Address", "type": "text" },
-      { "key": "price", "label": "Asking price", "type": "number" },
-      { "key": "type", "label": "Type", "type": "select", "options": ["House", "Condo", "Land"] }
+      {
+        "key": "address",
+        "label": "Address",
+        "type": "text"
+      },
+      {
+        "key": "price",
+        "label": "Asking price",
+        "type": "number"
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "select",
+        "options": [
+          "House",
+          "Condo",
+          "Land"
+        ]
+      }
     ]
   },
   "default_view": "board",
-  "archive_done_after_days": 60
+  "archive_done_after_days": 60,
+  "time_zone": "America/Denver"
 }

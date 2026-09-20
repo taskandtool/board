@@ -5,6 +5,9 @@
 // writes an activity row with who did it.
 import type pg from "pg";
 import "./types";
+import { cfg, todayIn } from "../config";
+
+export const today = () => todayIn(cfg.time_zone);
 
 export type Board = { id: number; key: string; name: string; position: number; archived_at: Date | null };
 export type Status = {
@@ -163,9 +166,10 @@ function where(filters: Filters, params: unknown[]): string {
   if (filters.mine) add("i.assignee = ?", filters.mine);
   if (filters.tag) add("? = any(i.tags)", filters.tag);
   if (filters.priority !== undefined) add("i.priority = ?", filters.priority);
-  if (filters.due === "overdue") parts.push("i.due_on < current_date and i.completed_at is null");
-  if (filters.due === "today") parts.push("i.due_on = current_date");
-  if (filters.due === "week") parts.push("i.due_on >= current_date and i.due_on < current_date + 7");
+  const t = today();
+  if (filters.due === "overdue") add("i.due_on < ?::date and i.completed_at is null", t);
+  if (filters.due === "today") add("i.due_on = ?::date", t);
+  if (filters.due === "week") { params.push(t); parts.push(`i.due_on >= $${params.length}::date and i.due_on < $${params.length}::date + 7`); }
   if (filters.due === "none") parts.push("i.due_on is null");
   return parts.length ? " and " + parts.join(" and ") : "";
 }
@@ -284,10 +288,30 @@ export type MoveResult = { item: Item; from: Status; to: Status; undo: Move };
 // transaction: lock the card, place it, renumber the columns it left and
 // joined, keep completed_at honest, record the activity. Returns what undo
 // needs: where the card was and which card followed it.
+// Every move takes the board's row lock first, so moves on one board run one
+// at a time and two that cross columns can never lock each other's rows in
+// opposite order. A move is a few milliseconds; a team never notices the
+// queue. A deadlock or serialization failure is still retried, as a belt.
 export async function moveItem(pool: pg.Pool, id: number, move: Move, who: string | null): Promise<MoveResult> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await moveOnce(pool, id, move, who);
+    } catch (e) {
+      const code = (e as { code?: string }).code;
+      if ((code === "40P01" || code === "40001") && attempt < 5) {
+        await new Promise((r) => setTimeout(r, 20 * attempt));
+        continue;
+      }
+      throw e;
+    }
+  }
+}
+
+async function moveOnce(pool: pg.Pool, id: number, move: Move, who: string | null): Promise<MoveResult> {
   const client = await pool.connect();
   try {
     await client.query("begin");
+    await client.query("select id from boards where id = (select board_id from items where id = $1) for update", [id]);
     const cur = (await client.query<Item>("select * from items where id = $1 for update", [id])).rows[0];
     if (!cur || cur.archived_at) throw new Error("no such card");
     const to = await statusById(client, move.statusId);
@@ -392,13 +416,13 @@ export async function attention(q: Q, boardId: number): Promise<Attention[]> {
     `select i.*, s.is_done from items i join statuses s on s.id = i.status_id where i.board_id = $1 and i.archived_at is null and not s.is_done ${ITEM_ORDER}`,
     [boardId],
   )).rows;
-  const today = new Date().toISOString().slice(0, 10);
+  const t = today();
   const stale = Date.now() - STALE_DAYS * 86_400_000;
   const out: Attention[] = [];
   for (const it of rows) {
     const why: string[] = [];
-    if (it.due_on && it.due_on < today) why.push(`overdue since ${it.due_on}`);
-    else if (it.due_on === today) why.push("due today");
+    if (it.due_on && it.due_on < t) why.push(`overdue since ${it.due_on}`);
+    else if (it.due_on === t) why.push("due today");
     if (it.priority === 2) why.push("urgent");
     if (it.status_id !== first && new Date(it.updated_at).getTime() < stale) why.push(`no change in ${STALE_DAYS} days while in progress`);
     if (over.has(it.status_id)) why.push("its column is over its limit");
@@ -421,12 +445,12 @@ export async function summary(q: Q, boardId: number): Promise<Summary> {
   const counts = await columnCounts(q, boardId);
   const stat = (await q.query<{ overdue: string; week: string; unassigned: string; done_week: string }>(
     `select
-       count(*) filter (where i.due_on < current_date and not s.is_done)::text as overdue,
-       count(*) filter (where i.due_on >= current_date and i.due_on < current_date + 7 and not s.is_done)::text as week,
+       count(*) filter (where i.due_on < $2::date and not s.is_done)::text as overdue,
+       count(*) filter (where i.due_on >= $2::date and i.due_on < $2::date + 7 and not s.is_done)::text as week,
        count(*) filter (where i.assignee is null and not s.is_done)::text as unassigned,
        count(*) filter (where i.completed_at >= now() - interval '7 days')::text as done_week
      from items i join statuses s on s.id = i.status_id where i.board_id = $1 and i.archived_at is null`,
-    [boardId],
+    [boardId, today()],
   )).rows[0];
   return {
     board,
@@ -439,11 +463,11 @@ export async function summary(q: Q, boardId: number): Promise<Summary> {
 
 export type DueState = "overdue" | "today" | "soon" | "later" | "none";
 
-export function dueState(due: string | null, completed: Date | null, today = new Date().toISOString().slice(0, 10)): DueState {
+export function dueState(due: string | null, completed: Date | null, t = today()): DueState {
   if (!due) return "none";
   if (completed) return "later";
-  if (due < today) return "overdue";
-  if (due === today) return "today";
-  const days = (Date.parse(due) - Date.parse(today)) / 86_400_000;
+  if (due < t) return "overdue";
+  if (due === t) return "today";
+  const days = (Date.parse(due) - Date.parse(t)) / 86_400_000;
   return days <= 3 ? "soon" : "later";
 }

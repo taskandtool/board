@@ -1,33 +1,92 @@
 {
   "business": "A roofing and gutter contractor with two crews; each card is one job at one address.",
-  "vocabulary": { "item": { "one": "Job", "many": "Jobs" } },
+  "vocabulary": {
+    "item": {
+      "one": "Job",
+      "many": "Jobs"
+    }
+  },
   "boards": [
     {
       "key": "jobs",
       "name": "Jobs",
       "columns": [
-        { "key": "quoted", "label": "Quoted" },
-        { "key": "scheduled", "label": "Scheduled" },
-        { "key": "on-site", "label": "On site", "wip_limit": 4 },
-        { "key": "invoiced", "label": "Invoiced", "is_done": true },
-        { "key": "paid", "label": "Paid", "is_done": true }
+        {
+          "key": "quoted",
+          "label": "Quoted"
+        },
+        {
+          "key": "scheduled",
+          "label": "Scheduled"
+        },
+        {
+          "key": "on-site",
+          "label": "On site",
+          "wip_limit": 4
+        },
+        {
+          "key": "invoiced",
+          "label": "Invoiced",
+          "is_done": true
+        },
+        {
+          "key": "paid",
+          "label": "Paid",
+          "is_done": true
+        }
       ]
     }
   ],
   "tags": [
-    { "name": "Roof", "role": "tag-1" },
-    { "name": "Gutters", "role": "tag-2" },
-    { "name": "Repair", "role": "tag-3" },
-    { "name": "Insurance", "role": "tag-4" }
+    {
+      "name": "Roof",
+      "role": "tag-1"
+    },
+    {
+      "name": "Gutters",
+      "role": "tag-2"
+    },
+    {
+      "name": "Repair",
+      "role": "tag-3"
+    },
+    {
+      "name": "Insurance",
+      "role": "tag-4"
+    }
   ],
   "card": {
-    "fields": ["due_on", "assignee", "priority", "tags", "checklist", "customer_ref"],
+    "fields": [
+      "due_on",
+      "assignee",
+      "priority",
+      "tags",
+      "checklist",
+      "customer_ref"
+    ],
     "custom": [
-      { "key": "address", "label": "Address", "type": "text" },
-      { "key": "crew", "label": "Crew", "type": "select", "options": ["North", "South"] },
-      { "key": "quote", "label": "Quote", "type": "number" }
+      {
+        "key": "address",
+        "label": "Address",
+        "type": "text"
+      },
+      {
+        "key": "crew",
+        "label": "Crew",
+        "type": "select",
+        "options": [
+          "North",
+          "South"
+        ]
+      },
+      {
+        "key": "quote",
+        "label": "Quote",
+        "type": "number"
+      }
     ]
   },
   "default_view": "board",
-  "archive_done_after_days": 30
+  "archive_done_after_days": 30,
+  "time_zone": "America/Chicago"
 }

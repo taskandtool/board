@@ -65,3 +65,13 @@ test("list sorting puts undated cards last and urgent first", () => {
   assert.deepEqual(sortItems([mk(1, null, 0), mk(2, "2026-01-02", 0), mk(3, "2026-01-01", 0)], "due_on").map((i: { id: number }) => i.id), [3, 2, 1]);
   assert.deepEqual(sortItems([mk(1, null, 0), mk(2, null, 2), mk(3, null, 1)], "priority").map((i: { id: number }) => i.id), [2, 3, 1]);
 });
+
+test("today follows the configured zone, not the machine", async () => {
+  const { todayIn, validTimeZone } = await import("../src/config-schema");
+  const instant = new Date("2026-09-20T23:30:00Z");
+  assert.equal(todayIn("UTC", instant), "2026-09-20");
+  assert.equal(todayIn("Australia/Sydney", instant), "2026-09-21");
+  assert.equal(todayIn("America/Los_Angeles", instant), "2026-09-20");
+  assert.ok(validTimeZone("Europe/London"));
+  assert.ok(!validTimeZone("Mars/Olympus"));
+});

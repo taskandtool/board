@@ -3,7 +3,7 @@
 // in, so the DOM is never the source of truth for order.
 import { cfg, showsField, tagRole } from "../config";
 import type { Board, Filters, Item, Person, Status } from "../db/queries";
-import { dueState, PRIORITIES } from "../db/queries";
+import { dueState, PRIORITIES, today } from "../db/queries";
 import { vocab } from "./layout";
 
 export type BoardData = {
@@ -182,7 +182,7 @@ export function DueBadge({ due, state }: { due: string; state: ReturnType<typeof
 export function formatDate(d: string) {
   const [y, m, day] = d.split("-").map(Number);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const thisYear = new Date().getFullYear() === y;
+  const thisYear = Number(today().slice(0, 4)) === y;
   return `${day} ${months[m - 1]}${thisYear ? "" : " " + y}`;
 }
 

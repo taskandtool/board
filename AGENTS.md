@@ -15,7 +15,8 @@ changing the board rather than working from memory.
 
 - `board.config.json` is the first lever: the words (`Jobs`, `Candidates`),
   the boards and columns seeded on first run, the tag palette, which
-  fields a card shows, custom fields, the default view, the archive age.
+  fields a card shows, custom fields, the default view, the archive age,
+  the business's time zone.
   `examples/` holds three worked configs as prose to read, not a switch.
 - `migrations/` is the schema as numbered SQL files, applied once each at
   service start. Additive only; never rename a table.

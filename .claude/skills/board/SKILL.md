@@ -33,6 +33,10 @@ needs touching to reshape the board.
      `items.fields` as JSON and show on the card, in CSV, and in the
      scripts (`--field crew=North`).
    - `default_view` (`board` or `list`) and `archive_done_after_days`.
+   - `time_zone`, an IANA name (`America/Chicago`, `Europe/London`). Due
+     dates are dates, not instants, so "overdue" and "due today" are judged
+     in this zone; it ships as `UTC`, and setting it is part of shaping the
+     board. The machine's own clock never decides.
    - `business` is one line about the business. It ships as `to fill`;
      write the real line when you shape the board, which also retires the
      "Shape this board" suggestion.
