@@ -27,6 +27,9 @@ runs anywhere with Node 20 and a Postgres.
 - **Several boards** in one app (jobs on one, candidates on another).
 - **Due badges** (overdue, today, soon), an archive with archive-by-age,
   and an activity trail per card.
+- **A quiet refresh** every 30 seconds where that is free (the edge, your
+  own server); on a Task & Tool machine the board refreshes after your own
+  edits only, so an open tab never keeps the machine awake.
 - **The AI's hands**: `scripts/items.mjs` and `scripts/board.mjs` add,
   move, find and summarise cards from chat, so "add a job for the Smith
   roof, due Friday" is a sentence rather than a form.

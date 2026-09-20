@@ -9,7 +9,18 @@ import { vocab } from "./layout";
 export type BoardData = {
   board: Board; columns: Status[]; items: Item[]; counts: Map<number, number>;
   filters: Filters; people: Person[]; samples: number; user: string | null;
+  refreshSeconds: number;
 };
+
+// The board re-fetches itself after a drawer edit (board-changed) and, where
+// that is free, on a timer while the tab is visible and nothing is being
+// dragged or typed. The timer is the server's call (src/db/client.ts).
+export function refreshTrigger(seconds: number): string {
+  const timer = seconds > 0
+    ? `every ${seconds}s [document.visibilityState === 'visible' && !window.boardBusy && !(document.activeElement && document.activeElement.closest('#board form'))], `
+    : "";
+  return timer + "board-changed from:body";
+}
 
 const filterQuery = (f: Filters) => {
   const p = new URLSearchParams();
@@ -20,7 +31,7 @@ const filterQuery = (f: Filters) => {
 };
 
 export function BoardView({ data }: { data: BoardData }) {
-  const { board, columns, items, counts, filters, user, samples } = data;
+  const { board, columns, items, counts, filters, user, samples, refreshSeconds } = data;
   const base = `/b/${board.key}`;
   const refresh = `${base}${filterQuery(filters)}`;
   return (
@@ -29,7 +40,7 @@ export function BoardView({ data }: { data: BoardData }) {
       data-board={board.key}
       data-refresh={refresh}
       hx-get={refresh}
-      hx-trigger="every 30s [document.visibilityState === 'visible' && !window.boardBusy && !(document.activeElement && document.activeElement.closest('#board form'))], board-changed from:body"
+      hx-trigger={refreshTrigger(refreshSeconds)}
       hx-swap="outerHTML"
     >
       <FilterBar data={data} />

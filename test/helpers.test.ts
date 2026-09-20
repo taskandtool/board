@@ -75,3 +75,9 @@ test("today follows the configured zone, not the machine", async () => {
   assert.ok(validTimeZone("Europe/London"));
   assert.ok(!validTimeZone("Mars/Olympus"));
 });
+
+test("the quiet refresh is a timer only where it is free", async () => {
+  const { refreshTrigger } = await import("../src/views/board");
+  assert.equal(refreshTrigger(0), "board-changed from:body");
+  assert.match(refreshTrigger(30), /^every 30s \[.*visibilityState.*boardBusy.*\], board-changed from:body$/);
+});

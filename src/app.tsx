@@ -4,7 +4,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 import { cfg } from "./config";
-import { db, dbState, isReady, onPlatform } from "./db/client";
+import { db, dbState, isReady, onPlatform, refreshSeconds } from "./db/client";
 import * as Q from "./db/queries";
 import type { Board, Filters, Item, Status } from "./db/queries";
 import { BoardView, Toast, type BoardData } from "./views/board";
@@ -89,7 +89,7 @@ async function boardData(c: Context<{ Variables: Vars }>, board: Board, filters 
   const [columns, items, counts, people, samples] = await Promise.all([
     Q.statuses(pool, board.id), Q.items(pool, board.id, filters), Q.columnCounts(pool, board.id), Q.people(pool), Q.sampleCount(pool, board.id),
   ]);
-  return { board, columns, items, counts, filters, people, samples, user: c.get("user") };
+  return { board, columns, items, counts, filters, people, samples, user: c.get("user"), refreshSeconds: refreshSeconds() };
 }
 
 // Every mutation from the board answers with the board partial, and a toast

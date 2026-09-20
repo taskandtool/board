@@ -102,6 +102,15 @@ Before showing work: `npm run check` and `npm test`. Then look at it:
 the board at `localhost:3000/b/<key>`, with `BOARD_USER=<email>` in the
 environment only if you run a second server by hand off the service.
 
+## Cost: no timer on the machine
+
+An open board re-fetches itself after every edit made in its drawer, and
+nothing else on this machine: a timer would hold the sprite awake for as
+long as a tab is open. At the edge or on a server off Task & Tool the same
+board also refreshes every 30 seconds, because there it costs nothing.
+`BOARD_REFRESH_SECONDS` in the environment overrides either way (`0` is
+off). Do not add polling, websockets or a "live" mode on the machine.
+
 ## The board's address
 
 A project starts "Not published", so the board has no address until the

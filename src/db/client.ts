@@ -20,6 +20,17 @@ export type DbState = "no-url" | "connecting" | "migrating" | "ready" | "error";
 // identity comes from the edge's header only and BOARD_USER is ignored.
 export const onPlatform = (): boolean => existsSync("/home/sprite/.tasktool");
 
+// How often an open board quietly re-fetches itself. On a Task & Tool
+// machine: never, because a tab left open would hold the sprite awake all
+// day and a wake costs money; the edge and an off-platform server refresh
+// every 30 seconds for free. BOARD_REFRESH_SECONDS overrides either way
+// (0 turns it off).
+export function refreshSeconds(): number {
+  const raw = process.env.BOARD_REFRESH_SECONDS;
+  if (raw !== undefined && /^\d+$/.test(raw)) return Number(raw);
+  return onPlatform() ? 0 : 30;
+}
+
 let pool: pg.Pool | null = null;
 let state: DbState = "no-url";
 let lastError = "";
