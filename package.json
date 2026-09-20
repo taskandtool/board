@@ -13,7 +13,7 @@
     "postinstall": "node scripts/vendor.mjs",
     "check": "node scripts/check.mjs",
     "typecheck": "tsc --noEmit -p .",
-    "test": "node --import tsx --test \"test/*.test.ts\""
+    "test": "node --import tsx --test test/config.test.ts test/helpers.test.ts test/db.test.ts"
   },
   "engines": {
     "node": ">=20"
