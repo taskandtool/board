@@ -17,14 +17,15 @@ const findings = [];
 
 // board.config.json, through the server's own validator (needs tsx)
 const cfgCheck = spawnSync("node_modules/.bin/tsx", ["-e", `
-  import { validate } from "./src/config";
+  import { validate } from "./src/config-schema";
   import { readFileSync } from "node:fs";
   let raw; try { raw = JSON.parse(readFileSync("board.config.json", "utf8")); } catch (e) { console.log("board.config.json is not valid JSON: " + e.message); process.exit(0); }
   for (const p of validate(raw)) console.log("board.config.json: " + p);
   if (typeof raw.business === "string" && raw.business.includes("to fill")) console.error("note: board.config.json's business line is still to fill; the board is a template until the AI shapes it");
 `], { encoding: "utf8" });
 for (const line of (cfgCheck.stdout || "").split("\n").filter(Boolean)) findings.push(line);
-if (cfgCheck.stderr) process.stderr.write(cfgCheck.stderr);
+if (cfgCheck.status !== 0) findings.push("board.config.json could not be validated:\n" + (cfgCheck.stderr || "").trim().split("\n").slice(0, 6).join("\n"));
+else if (cfgCheck.stderr) process.stderr.write(cfgCheck.stderr);
 
 // migrations numbered without gaps
 const migs = readdirSync("migrations").filter((f) => f.endsWith(".sql")).sort();

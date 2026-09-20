@@ -48,7 +48,7 @@ export function BoardView({ data }: { data: BoardData }) {
                 {col.is_done ? <span class="ml-auto text-label text-ink-3" title="Cards here count as finished">done</span> : null}
               </header>
               <ol class="flex min-h-10 flex-col gap-2 px-2 pb-2" data-cards data-status-id={col.id}>
-                {cards.map((it) => <Card item={it} columns={columns} board={board} user={user} />)}
+                {cards.map((it) => <Card item={it} columns={columns} board={board} user={user} refresh={refresh} />)}
                 {cards.length === 0 && filtersActive(filters) ? <li class="px-1 py-2 text-label text-ink-3">Nothing matches here</li> : null}
               </ol>
               {user ? (
@@ -119,7 +119,7 @@ export function FilterBar({ data, list = false }: { data: BoardData; list?: bool
   );
 }
 
-export function Card({ item, columns, board, user }: { item: Item; columns: Status[]; board: Board; user: string | null }) {
+export function Card({ item, columns, board, user, refresh }: { item: Item; columns: Status[]; board: Board; user: string | null; refresh: string }) {
   const due = dueState(item.due_on, item.completed_at);
   const done = item.checklist.filter((c) => c.done).length;
   const col = columns.find((c) => c.id === item.status_id)!;
@@ -137,20 +137,24 @@ export function Card({ item, columns, board, user }: { item: Item; columns: Stat
               {others.map((c) => (
                 <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                   <input type="hidden" name="status_id" value={c.id} />
+                  <input type="hidden" name="return" value={refresh} />
                   <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move to {c.label}</button>
                 </form>
               ))}
               <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                 <input type="hidden" name="status_id" value={col.id} />
                 <input type="hidden" name="direction" value="up" />
+                <input type="hidden" name="return" value={refresh} />
                 <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move up</button>
               </form>
               <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                 <input type="hidden" name="status_id" value={col.id} />
                 <input type="hidden" name="direction" value="down" />
+                <input type="hidden" name="return" value={refresh} />
                 <button class="w-full rounded-control px-2 py-1 text-left hover:bg-panel">Move down</button>
               </form>
               <form method="post" action={`/items/${item.id}/archive`} hx-post={`/items/${item.id}/archive`} hx-target="#board" hx-swap="outerHTML">
+                <input type="hidden" name="return" value={refresh} />
                 <button class="w-full rounded-control px-2 py-1 text-left text-ink-2 hover:bg-panel">Archive</button>
               </form>
             </div>

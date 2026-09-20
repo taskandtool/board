@@ -158,7 +158,7 @@ const ITEM_ORDER = "order by s.position, i.position, i.id";
 function where(filters: Filters, params: unknown[]): string {
   const parts: string[] = [];
   const add = (sql: string, v: unknown) => { params.push(v); parts.push(sql.replace("?", `$${params.length}`)); };
-  if (filters.q) add("(i.title ilike ? or i.notes ilike ? )".replace("? )", `$${params.length + 1})`), `%${filters.q}%`);
+  if (filters.q) { params.push(`%${filters.q}%`); parts.push(`(i.title ilike $${params.length} or i.notes ilike $${params.length})`); }
   if (filters.assignee) add("i.assignee = ?", filters.assignee);
   if (filters.mine) add("i.assignee = ?", filters.mine);
   if (filters.tag) add("? = any(i.tags)", filters.tag);
@@ -296,7 +296,7 @@ export async function moveItem(pool: pg.Pool, id: number, move: Move, who: strin
     const after = (await client.query<{ id: number }>("select id from items where status_id = $1 and archived_at is null and id <> $2 and (position > $3 or (position = $3 and id > $2)) order by position, id limit 1", [cur.status_id, id, cur.position])).rows[0];
     const undo: Move = { statusId: cur.status_id, beforeId: after?.id ?? null };
 
-    const others = (await client.query<{ id: number }>("select id from items where status_id = $1 and archived_at is null and id <> $2 order by position, id", [to.id, id])).rows.map((r) => r.id);
+    const others = (await client.query<{ id: number }>("select id from items where status_id = $1 and archived_at is null and id <> $2 order by position, id for update", [to.id, id])).rows.map((r) => r.id);
     let at = others.length;
     if (move.beforeId != null) {
       const i = others.indexOf(move.beforeId);
