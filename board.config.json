@@ -1,0 +1,26 @@
+{
+  "business": "to fill",
+  "vocabulary": { "item": { "one": "Item", "many": "Items" } },
+  "boards": [
+    {
+      "key": "work",
+      "name": "Work",
+      "columns": [
+        { "key": "todo", "label": "To do" },
+        { "key": "doing", "label": "Doing", "wip_limit": null },
+        { "key": "done", "label": "Done", "is_done": true }
+      ]
+    }
+  ],
+  "tags": [
+    { "name": "Urgent", "role": "tag-1" },
+    { "name": "Waiting", "role": "tag-2" },
+    { "name": "Client", "role": "tag-3" }
+  ],
+  "card": {
+    "fields": ["due_on", "assignee", "priority", "tags", "checklist"],
+    "custom": []
+  },
+  "default_view": "board",
+  "archive_done_after_days": 14
+}

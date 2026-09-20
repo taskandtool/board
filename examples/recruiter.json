@@ -1,0 +1,34 @@
+{
+  "business": "A boutique recruiting firm placing engineers; each card is one candidate for one role.",
+  "vocabulary": { "item": { "one": "Candidate", "many": "Candidates" } },
+  "boards": [
+    {
+      "key": "pipeline",
+      "name": "Pipeline",
+      "columns": [
+        { "key": "sourced", "label": "Sourced" },
+        { "key": "screening", "label": "Screening", "wip_limit": 8 },
+        { "key": "interviewing", "label": "Interviewing", "wip_limit": 5 },
+        { "key": "offer", "label": "Offer" },
+        { "key": "placed", "label": "Placed", "is_done": true },
+        { "key": "passed", "label": "Passed", "is_done": true }
+      ]
+    }
+  ],
+  "tags": [
+    { "name": "Senior", "role": "tag-1" },
+    { "name": "Remote", "role": "tag-2" },
+    { "name": "Referral", "role": "tag-3" },
+    { "name": "Hot", "role": "tag-4" }
+  ],
+  "card": {
+    "fields": ["due_on", "assignee", "priority", "tags", "checklist", "customer_ref"],
+    "custom": [
+      { "key": "role", "label": "Role", "type": "text" },
+      { "key": "source", "label": "Source", "type": "select", "options": ["LinkedIn", "Referral", "Inbound", "Event"] },
+      { "key": "salary", "label": "Expected salary", "type": "number" }
+    ]
+  },
+  "default_view": "list",
+  "archive_done_after_days": 90
+}

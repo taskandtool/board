@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "slug": "board",
+  "version": "0.1.0",
+  "needs": {
+    "capabilities": [{ "kind": "postgres", "strength": "required" }]
+  },
+  "ready": { "service": "web" },
+  "suggestions": [
+    {
+      "id": "shape-this-board",
+      "label": "Shape this board for my business",
+      "prompt": "Shape this board for how my business works: read board.config.json and the examples in examples/, ask me only what you cannot infer from this project, then set the vocabulary, columns, tags and card fields, restart the service, and show me. We are: ",
+      "when": [{ "path": "board.config.json", "is": "unfilled" }]
+    },
+    {
+      "id": "import-my-spreadsheet",
+      "label": "Import the spreadsheet I use today",
+      "prompt": "I track this work in a spreadsheet today. I will attach it; map its columns to the board's fields with node scripts/import.mjs --dry-run first, show me the mapping, then import it."
+    },
+    {
+      "id": "what-needs-attention",
+      "label": "What needs attention?",
+      "prompt": "Using node scripts/items.mjs, show me the unfinished items that need attention first (overdue, urgent, stale in progress, columns over their limit) and say why in one line each."
+    },
+    {
+      "id": "add-items-by-chat",
+      "label": "Add items from what I tell you",
+      "prompt": "I will describe work in plain words; add each as an item with node scripts/items.mjs add, picking the column, due date, tags and assignee from what I say, and confirm in a short list. Here is the work: "
+    }
+  ]
+}
