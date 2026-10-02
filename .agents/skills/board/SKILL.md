@@ -1,6 +1,6 @@
 ---
 name: board
-description: "Run and reshape this work board: the levers (board.config.json, columns as rows, additive migrations), the dev loop on the machine, the scripts that add, move, find and summarise cards from chat, CSV import, and the rules. Use when the owner says 'shape this board', 'add a job', 'what needs attention', 'import my spreadsheet'."
+description: "Run and reshape this work board: the levers (board.config.json, columns as rows, additive migrations), dev on the machine, publishing to production, the scripts that add, move, find and summarise cards from chat, CSV import. Use for 'shape this board', 'add a job', 'what needs attention', 'import my spreadsheet', 'publish it'."
 ---
 
 # Board

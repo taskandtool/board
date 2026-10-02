@@ -1,6 +1,7 @@
 // Shared by the command-line scripts: the pool, the argument parser, output.
 import type pg from "pg";
-import { databaseUrl, openPool } from "../src/db/client";
+import { databaseUrl } from "../src/db/client";
+import { openPool } from "../src/db/pool";
 import { migrate } from "../src/db/migrate";
 import { seed } from "../src/db/seed";
 import * as Q from "../src/db/queries";

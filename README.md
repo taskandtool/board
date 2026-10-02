@@ -27,9 +27,10 @@ runs anywhere with Node 20 and a Postgres.
 - **Several boards** in one app (jobs on one, candidates on another).
 - **Due badges** (overdue, today, soon), an archive with archive-by-age,
   and an activity trail per card.
-- **A quiet refresh** every 30 seconds where that is free (the edge, your
-  own server); on a Task & Tool machine the board refreshes after your own
-  edits only, so an open tab never keeps the machine awake.
+- **A quiet refresh** every 30 seconds where that is free (production on
+  Cloudflare, your own server); in dev on a Task & Tool machine the board
+  refreshes after your own edits only, so an open tab never keeps the
+  machine awake.
 - **The AI's hands**: `scripts/items.mjs` and `scripts/board.mjs` add,
   move, find and summarise cards from chat, so "add a job for the Smith
   roof, due Friday" is a sentence rather than a form.
@@ -52,12 +53,16 @@ call things does.
 
 ## How it runs
 
-- On Task & Tool: the platform clones this repository, runs
+- **Dev, on Task & Tool:** the platform clones this repository, runs
   `.taskandtool/setup.sh` (dependencies, CSS, the `web` service), grants
   the project's Postgres as `DATABASE_URL`, and the board migrates itself.
-  Set the project to **Team only** in Project settings and the board has
-  its address; the edge tells the board who is signed in, and that is the
-  whole login. Without an identity the board is read only.
+  The team opens it from the app's Development link.
+- **Production, on Cloudflare:** `npm run deploy` migrates from the
+  machine, builds `dist/` and `build/worker.mjs` (the same Hono app, `pg`
+  over Cloudflare's sockets with `nodejs_compat`), and deploys both. The
+  first deploy opens it to the team. Either way Task & Tool tells the board
+  who is signed in, and that is the whole login. Without an identity the
+  board is read only.
 - Anywhere else: `npm install`, put `DATABASE_URL` (any Postgres) and
   `BOARD_USER=<your email>` in `.env`, then `npm run dev` and open
   `localhost:3000`. `npm run check` and `npm test` are the checks; the

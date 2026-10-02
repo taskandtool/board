@@ -9,7 +9,7 @@
 #   1. makes sure the working copy is a git repo with a commit in it
 #   2. installs the npm dependencies (which vendors htmx and SortableJS) and
 #      builds the CSS once
-#   3. registers the `web` service (`npm run dev`) so the board is live on
+#   3. registers the `web` service (`npm run dev`) so the board runs in dev on
 #      the machine's URL, or restarts it after a replacement
 #
 # The database is not this script's business: the platform grants

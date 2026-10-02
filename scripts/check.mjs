@@ -6,6 +6,8 @@
 //     Tailwind colours, gradients, blur, animations, tracking/leading
 //     overrides, weights above semibold
 //   - no em dashes in the interface copy
+//   - only the dev-only files under src/ import a Node built-in, so the
+//     code production runs on Cloudflare stays portable
 //   - the manifest and the skill adapter are in place
 //   - the typecheck passes
 // Exit 1 with the findings when something is off.
@@ -60,6 +62,14 @@ for (const file of walk("src").filter((f) => f.endsWith(".tsx"))) {
   src.split("\n").forEach((line, i) => {
     if (line.includes("—")) findings.push(`${file}:${i + 1}: an em dash in interface copy; write a comma, a colon, or a new sentence`);
   });
+}
+
+// production runs the same app on Cloudflare: Node built-ins only in the
+// files that run in dev alone
+const nodeOnly = new Set(["src/server.ts", "src/db/client.ts", "src/db/migrate.ts"]);
+for (const file of walk("src").filter((f) => /\.tsx?$/.test(f) && !nodeOnly.has(f))) {
+  const m = readFileSync(file, "utf8").match(/from "(node:[a-z_/]+)"/);
+  if (m) findings.push(`${file} imports ${m[1]}: production on Cloudflare runs this file; only ${[...nodeOnly].join(", ")} may`);
 }
 
 // the conventions the platform reads

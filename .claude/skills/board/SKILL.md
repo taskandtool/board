@@ -1,14 +1,15 @@
 ---
 name: board
-description: "Run and reshape this work board: the levers (board.config.json, columns as rows, additive migrations), the dev loop on the machine, the scripts that add, move, find and summarise cards from chat, CSV import, and the rules. Use when the owner says 'shape this board', 'add a job', 'what needs attention', 'import my spreadsheet'."
+description: "Run and reshape this work board: the levers (board.config.json, columns as rows, additive migrations), dev on the machine, publishing to production, the scripts that add, move, find and summarise cards from chat, CSV import. Use for 'shape this board', 'add a job', 'what needs attention', 'import my spreadsheet', 'publish it'."
 ---
 
 # Board
 
 This app is a kanban board on Hono: server-rendered JSX, htmx for the
 round trips, SortableJS for drag, Postgres for the data, no client
-framework. It serves from this machine as the `web` service. `AGENTS.md`
-in the app root says where things are; this file is how to change it.
+framework. **Dev** is this machine's `web` service; **production** is the
+same app deployed to Cloudflare (below). `AGENTS.md` in the app root says
+where things are; this file is how to change it.
 
 ## The three levers
 
@@ -75,7 +76,7 @@ needs touching to reshape the board.
    add the column to `src/db/queries.ts` and the views, and run `npm run
    check` and `npm test`. Additive only; never rename or drop a table.
 
-## The loop on this machine
+## Dev, on this machine
 
 ```bash
 sprite-env services get web                          # definition, status, restart_count
@@ -102,22 +103,49 @@ Before showing work: `npm run check` and `npm test`. Then look at it:
 the board at `localhost:3000/b/<key>`, with `BOARD_USER=<email>` in the
 environment only if you run a second server by hand off the service.
 
-## Cost: no timer on the machine
+## Production, on Cloudflare
+
+The team works on the board in production: always on, fast, and the
+machine can sleep. Dev is where you change it and they look before it
+ships. Publish when the owner asks:
+
+```bash
+npm run deploy          # = python3 scripts/deploy.py: migrate, build, deploy
+```
+
+It runs the migrations from here (production never migrates), builds
+`dist/` (the CSS and the vendored scripts) and `build/worker.mjs` (the app,
+with `pg` over Cloudflare's sockets), and deploys both with `deploy_site`.
+It prints production's address; open it and check a board. The first
+deploy opens production to the team; making it public is the owner's
+switch on the dashboard, and a board never needs to be. A custom domain is
+the owner's, in the app's Settings.
+
+Production changes only when you deploy again. After a change in dev
+(code, `board.config.json`, a migration), say it is in dev only until the
+next deploy; the dashboard's **Publish changes** is the owner asking for
+one. Data is one database: a card added in dev is in production at once.
+To roll back code, check out the last good commit and deploy it.
+
+`src/worker.ts` is production's entry and `src/server.ts` dev's; only
+`src/server.ts` and `src/db/client.ts` and `src/db/migrate.ts` may use Node
+built-ins (`npm run check` says so).
+
+## Cost: no timer in dev
 
 An open board re-fetches itself after every edit made in its drawer, and
-nothing else on this machine: a timer would hold the sprite awake for as
-long as a tab is open. At the edge or on a server off Task & Tool the same
-board also refreshes every 30 seconds, because there it costs nothing.
-`BOARD_REFRESH_SECONDS` in the environment overrides either way (`0` is
-off). Do not add polling, websockets or a "live" mode on the machine.
+nothing else in dev: a timer would hold the machine awake for as long as
+a tab is open. Production and a server off Task & Tool also refresh every
+30 seconds, because there it costs nothing. `BOARD_REFRESH_SECONDS`
+overrides either way (`0` is off). Do not add polling, websockets or a
+realtime mode in dev.
 
-## The board's address
+## Who is signed in
 
-A project starts "Not published", so the board has no address until the
-owner sets the project to **Team only** in Project settings. Say so when
-they ask where the board is. Team only is what makes the edge inject the
-signed-in member's email as `X-TaskTool-User`; that header is the board's
-whole notion of a user (assignee, "mine", who did what). Never add a login.
+Dev and production both need a Task & Tool sign-in unless the owner made
+production public, and both carry the signed-in member's email as
+`X-TaskTool-User`; that header is the board's whole notion of a user
+(assignee, "mine", who did what). Never add a login.
 
 ## Your hands: the scripts
 

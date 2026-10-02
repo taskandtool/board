@@ -20,3 +20,7 @@ imports/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Production build output: npm run build recreates both.
+dist/
+build/

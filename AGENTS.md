@@ -2,8 +2,9 @@
 
 A kanban board for the work this business runs: jobs, listings,
 candidates, client projects, tickets. Columns per board, a card per item,
-drag between columns, a list view, a record of who did what. This
-repository *is* the app: the code at the root, the one skill that knows
+drag between columns, a list view, a record of who did what. It runs in
+**dev** on this machine and in **production** on Cloudflare once
+deployed. This repository *is* the app: the code at the root, the one skill that knows
 how to work on it in `.claude/skills/board/`, and `.taskandtool/setup.sh`
 for what the machine needs (dependencies, the `web` service). All of it is
 the owner's to change.
@@ -23,8 +24,9 @@ changing the board rather than working from memory.
 - `src/db/queries.ts` is every query the board runs, named. Routes,
   scripts and tests all go through it.
 - `src/app.tsx` is the Hono app: identity, the read-only rule, the routes.
-  `src/views/` are the pages and partials. `src/server.ts` is the machine
-  entry; `src/db/client.ts` is the only file that knows it runs on Node.
+  `src/views/` are the pages and partials. `src/server.ts` is dev's entry
+  (Node, with `src/db/client.ts`); `src/worker.ts` is production's
+  (Cloudflare). `src/runtime.ts` is all that differs between them.
 - `scripts/items.mjs` and `scripts/board.mjs` are your hands on the data
   from chat; `scripts/import.mjs` and `export.mjs` move CSV in and out.
   Every one answers `--help`.
@@ -37,15 +39,17 @@ changing the board rather than working from memory.
 ## The loop
 
 - `npm run dev` is what the `web` service runs: Tailwind rebuilds the CSS
-  and the server restarts on every change, so an edit is live on refresh.
+  and the server restarts on every change, so an edit is in dev on refresh.
   If the service is not running, re-run `bash ~/app/.taskandtool/setup.sh`
   (idempotent) or register it as the `board` skill says.
 - `npm run check` before showing work (config valid, migrations numbered,
   the refuse list, the typecheck). `npm test` for the tests.
 - After a new migration: restart the service (`sprite-env services restart
   web`) or run `node scripts/migrate.mjs`.
+- `npm run deploy` publishes to production (migrate, build, deploy), when
+  the owner asks; production changes only then.
 - Commit at milestones. Never commit `node_modules/`, `static/vendor/`,
-  `static/board.css`, or any credential.
+  `static/board.css`, `dist/`, `build/`, or any credential.
 
 ## Rules
 
@@ -54,13 +58,13 @@ changing the board rather than working from memory.
   `activity`, `people`.
 - Migrations are additive and idempotent. A new field is a new numbered
   file with `if not exists`; an old file is never edited.
-- Identity comes from the platform. The edge sets `X-TaskTool-User` from a
-  signed-in team member; the board builds no login, and with no identity it
+- Identity comes from the platform. Task & Tool sets `X-TaskTool-User` from
+  a signed-in team member; the board builds no login, and with no identity it
   is read only. Never weaken that.
 - Colours and sizes are tokens in `styles/theme.css`. Markup never carries
   a hex value or a Tailwind default colour; `npm run check` refuses both.
   No em dashes in interface copy.
 - Real data only. The example cards are marked and removable; never invent
   items, people or history to make the board look busy.
-- The board has no browser address until the owner sets the project to
-  Team only in Task & Tool. Say where that switch is; do not work around it.
+- The first deploy opens production to the team; making it public is the
+  owner's switch, and a board never needs it.

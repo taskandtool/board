@@ -1,31 +1,30 @@
-// The database: pg on DATABASE_URL, one small pool, and the late-database
-// rule. On Task & Tool the `web` service sources /home/sprite/.env once at
-// start, and a fresh install can start the service moments before the
+// The database in dev: pg on DATABASE_URL, one small pool, and the
+// late-database rule. On Task & Tool the `web` service sources
+// /home/sprite/.env once at start, and a fresh install can start the service moments before the
 // platform writes DATABASE_URL into that file; a replaced machine sees the
 // same gap for a few seconds. So the server comes up without a database,
 // says so on one page, watches for the URL, and migrates the moment it
 // appears. Off-platform the file does not exist and the env var is the whole
 // story. This is the only file that knows it runs on Node.
 import { existsSync, readFileSync } from "node:fs";
-import pg from "pg";
+import type pg from "pg";
+import type { DbState, Runtime } from "../runtime";
 import { migrate } from "./migrate";
+import { openPool } from "./pool";
 import { seed } from "./seed";
 
-const { Pool } = pg;
 const ENV_FILE = "/home/sprite/.env";
 
-export type DbState = "no-url" | "connecting" | "migrating" | "ready" | "error";
-
 // On a Task & Tool machine the platform writes /home/sprite/.tasktool; there,
-// identity comes from the edge's header only and BOARD_USER is ignored.
-export const onPlatform = (): boolean => existsSync("/home/sprite/.tasktool");
+// identity comes from the platform's header only and BOARD_USER is ignored.
+const onPlatform = (): boolean => existsSync("/home/sprite/.tasktool");
 
 // How often an open board quietly re-fetches itself. On a Task & Tool
 // machine: never, because a tab left open would hold the sprite awake all
-// day and a wake costs money; the edge and an off-platform server refresh
-// every 30 seconds for free. BOARD_REFRESH_SECONDS overrides either way
-// (0 turns it off).
-export function refreshSeconds(): number {
+// day and a wake costs money; production on Cloudflare and an off-platform
+// server refresh every 30 seconds for free. BOARD_REFRESH_SECONDS overrides
+// either way (0 turns it off).
+function refreshSeconds(): number {
   const raw = process.env.BOARD_REFRESH_SECONDS;
   if (raw !== undefined && /^\d+$/.test(raw)) return Number(raw);
   return onPlatform() ? 0 : 30;
@@ -45,29 +44,6 @@ export function databaseUrl(): string | undefined {
   } catch {
     return undefined;
   }
-}
-
-export function dbState(): { state: DbState; error: string } {
-  return { state, error: lastError };
-}
-
-export function db(): pg.Pool {
-  if (!pool || state !== "ready") throw new Error("the database is not ready");
-  return pool;
-}
-
-export function isReady() {
-  return state === "ready";
-}
-
-// Open a pool on a URL: four connections at most (the direct Neon host's
-// limit is shared by every app in the project) and a connect budget of
-// twenty seconds, because a cold Neon endpoint takes a few seconds to wake.
-export function openPool(url: string): pg.Pool {
-  // pg already treats sslmode=require as verify-full and warns about the
-  // alias on every run; say verify-full outright so the scripts stay quiet.
-  const explicit = url.replace(/([?&])sslmode=(require|prefer|verify-ca)\b/, "$1sslmode=verify-full");
-  return new Pool({ connectionString: explicit, max: 4, connectionTimeoutMillis: 20_000, idleTimeoutMillis: 30_000 });
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -103,4 +79,15 @@ export async function start(log: (msg: string) => void = console.log): Promise<v
       await sleep(5000);
     }
   }
+}
+
+// Dev's runtime: the one pool this server keeps, once it is ready.
+export function machineRuntime(): Runtime {
+  const platform = onPlatform();
+  return {
+    open: () => (state === "ready" && pool ? { db: pool } : { db: null, state, error: lastError }),
+    onPlatform: platform,
+    refreshSeconds: refreshSeconds(),
+    fallbackUser: platform ? "" : process.env.BOARD_USER || "",
+  };
 }

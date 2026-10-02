@@ -27,6 +27,11 @@
       "id": "add-items-by-chat",
       "label": "Add items from what I tell you",
       "prompt": "I will describe work in plain words; add each as an item with node scripts/items.mjs add, picking the column, due date, tags and assignee from what I say, and confirm in a short list. Here is the work: "
+    },
+    {
+      "id": "publish-to-production",
+      "label": "Publish to production",
+      "prompt": "Publish the board to production with npm run deploy (the board skill): it migrates, builds and deploys to Cloudflare. Open the production address to check a board, and tell me who can see it."
     }
   ]
 }
