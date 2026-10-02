@@ -115,10 +115,9 @@ says what production is; this is the board's part.
    against the one database the moment you deploy.
 
 Then `npm run deploy`: it migrates, builds, and deploys. It prints
-production's address; open it and check a board. A change to the code,
-`board.config.json` or a migration reaches production only with a deploy.
-Cards are different: dev and production share one database, so a card
-added in dev is in production at once. A board never needs to be public.
+production's address; open it and check a board. Code,
+`board.config.json` and migrations wait for a deploy; cards do not, since
+dev and production share one database. A board never needs to be public.
 
 `src/worker.ts` is production's entry and `src/server.ts` dev's; only
 `src/server.ts` and `src/db/client.ts` and `src/db/migrate.ts` may use Node
