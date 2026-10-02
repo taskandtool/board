@@ -47,7 +47,7 @@ changing the board rather than working from memory.
 - After a new migration: restart the service (`sprite-env services restart
   web`) or run `node scripts/migrate.mjs`.
 - `npm run deploy` publishes to production (migrate, build, deploy), when
-  the owner asks; production changes only then.
+  the owner asks, after the board skill's "Before each deploy"; production changes only then.
 - Commit at milestones. Never commit `node_modules/`, `static/vendor/`,
   `static/board.css`, `dist/`, `build/`, or any credential.
 

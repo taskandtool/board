@@ -15,7 +15,7 @@
     "check": "node scripts/check.mjs",
     "typecheck": "tsc --noEmit -p .",
     "test": "tsx --test test/config.test.ts test/helpers.test.ts test/db.test.ts",
-    "deploy": "python3 scripts/deploy.py"
+    "deploy": "node scripts/migrate.mjs && npm run build && python3 ~/tools/taskandtool.py deploy dist --worker build/worker.mjs --flag nodejs_compat"
   },
   "engines": {
     "node": ">=20"

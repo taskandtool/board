@@ -103,29 +103,22 @@ Before showing work: `npm run check` and `npm test`. Then look at it:
 the board at `localhost:3000/b/<key>`, with `BOARD_USER=<email>` in the
 environment only if you run a second server by hand off the service.
 
-## Production, on Cloudflare
+## Before each deploy
 
-The team works on the board in production: always on, fast, and the
-machine can sleep. Dev is where you change it and they look before it
-ships. Publish when the owner asks:
+The team works on the board in production. The platform's `deploy` skill
+says what production is; this is the board's part.
 
-```bash
-npm run deploy          # = python3 scripts/deploy.py: migrate, build, deploy
-```
+1. `npm run check` and `npm test` pass.
+2. Open the board in dev and look at what changed: a board, a card's
+   drawer, the list view.
+3. A new migration is additive and numbered (the check says so); it runs
+   against the one database the moment you deploy.
 
-It runs the migrations from here (production never migrates), builds
-`dist/` (the CSS and the vendored scripts) and `build/worker.mjs` (the app,
-with `pg` over Cloudflare's sockets), and deploys both with `deploy_site`.
-It prints production's address; open it and check a board. The first
-deploy opens production to the team; making it public is the owner's
-switch on the dashboard, and a board never needs to be. A custom domain is
-the owner's, in the app's Settings.
-
-Production changes only when you deploy again. After a change in dev
-(code, `board.config.json`, a migration), say it is in dev only until the
-next deploy; the dashboard's **Publish changes** is the owner asking for
-one. Data is one database: a card added in dev is in production at once.
-To roll back code, check out the last good commit and deploy it.
+Then `npm run deploy`: it migrates, builds, and deploys. It prints
+production's address; open it and check a board. A change to the code,
+`board.config.json` or a migration reaches production only with a deploy.
+Cards are different: dev and production share one database, so a card
+added in dev is in production at once. A board never needs to be public.
 
 `src/worker.ts` is production's entry and `src/server.ts` dev's; only
 `src/server.ts` and `src/db/client.ts` and `src/db/migrate.ts` may use Node

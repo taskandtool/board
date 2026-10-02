@@ -3,7 +3,7 @@
 //                    SortableJS, board.js, the favicon), served as assets
 //   build/worker.mjs the app bundled as one ES module, reached by every path
 //                    that is not a file in dist/
-// Run with `npm run build`; `npm run deploy` (scripts/deploy.py) runs it too.
+// Run with `npm run build`; `npm run deploy` runs it too.
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, rmSync } from "node:fs";
 import { builtinModules } from "node:module";
