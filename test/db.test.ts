@@ -18,9 +18,9 @@ if (!url) {
   const withSchema = (u: string, s: string) => u + (u.includes("?") ? "&" : "?") + "options=" + encodeURIComponent(`-c search_path=${s}`);
   const pool = new pg.Pool({ connectionString: withSchema(url, schema), max: 2 });
   const admin = new pg.Pool({ connectionString: url, max: 1 });
-  // On a Task & Tool machine the app's role owns one schema and cannot make
-  // another, and these tests must never run against the real tables; they
-  // skip there and run wherever a scratch schema can be made.
+  // On a Task & Tool machine the app's login cannot create a schema, and these
+  // tests must never run against the real tables; they skip there and run
+  // wherever a scratch schema can be made.
   let usable = true;
   let why = "";
   const scratch = async (t: { skip: (m: string) => void }) => {

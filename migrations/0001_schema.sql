@@ -1,8 +1,8 @@
 -- The board's schema. Every statement is safe to re-run: the service applies
 -- this file once (board_migrations records it) but a machine replacement or a
--- hand run must never break on a table that already exists. Tables are
--- unqualified: on Task & Tool the app's own role puts its schema first on the
--- search_path, so they land there and nowhere else.
+-- hand run must never break on a table that already exists. These are the
+-- project's tables: every app in the project can read them, and the board
+-- reads theirs (a customer's name) the same way.
 
 create table if not exists boards (
   id          bigserial primary key,
