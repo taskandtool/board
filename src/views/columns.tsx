@@ -16,18 +16,19 @@ export function ColumnsView({ board, columns, counts, user }: { board: Board; co
         <input name="name" value={board.name} required maxlength={60} disabled={ro} class="rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Board name" />
         {!ro ? <button class="rounded-control border border-line-strong px-3 py-1">Rename board</button> : null}
       </form>
-      <table class="mt-4 w-full border-collapse text-copy">
+      <div class="mt-4 overflow-x-auto">
+      <table class="w-full border-collapse text-copy">
         <thead>
           <tr class="border-b border-line-strong text-left text-label text-ink-3">
-            <th class="py-1 pr-3">Label</th><th class="py-1 pr-3">Key</th><th class="py-1 pr-3">Cards</th><th class="py-1 pr-3">Limit</th><th class="py-1 pr-3">Done</th><th class="py-1"></th>
+            <th class="py-1 pr-3">Label</th><th class="hidden py-1 pr-3 sm:table-cell">Key</th><th class="py-1 pr-3">Cards</th><th class="py-1 pr-3">Limit</th><th class="py-1 pr-3">Done</th><th class="py-1"></th>
           </tr>
         </thead>
         <tbody>
           {columns.map((c, i) => (
             <tr class="border-b border-line align-middle">
               <form method="post" action={`/columns/${c.id}`} id={`col-${c.id}`}></form>
-              <td class="py-1 pr-3"><input form={`col-${c.id}`} name="label" value={c.label} required maxlength={40} disabled={ro} class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Column label" /></td>
-              <td class="py-1 pr-3 text-label text-ink-3">{c.key}</td>
+              <td class="py-1 pr-3"><input form={`col-${c.id}`} name="label" value={c.label} required maxlength={40} disabled={ro} class="w-full min-w-28 rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Column label" /></td>
+              <td class="hidden py-1 pr-3 text-label text-ink-3 sm:table-cell">{c.key}</td>
               <td class="py-1 pr-3 text-ink-2">{counts.get(c.id) ?? 0}</td>
               <td class="py-1 pr-3"><input form={`col-${c.id}`} type="number" name="wip_limit" value={c.wip_limit ?? ""} min={1} max={999} disabled={ro} class="w-20 rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Limit" /></td>
               <td class="py-1 pr-3"><input form={`col-${c.id}`} type="checkbox" name="is_done" value="1" checked={c.is_done} disabled={ro} aria-label="Counts as done" /></td>
@@ -45,6 +46,7 @@ export function ColumnsView({ board, columns, counts, user }: { board: Board; co
           ))}
         </tbody>
       </table>
+      </div>
       {!ro ? (
         <form method="post" action={`${base}/columns`} class="mt-4 flex flex-wrap items-end gap-2 text-label">
           <label class="flex flex-col gap-1"><span class="text-ink-3">New column</span><input name="label" required maxlength={40} placeholder="Label" class="rounded-control border border-line-strong bg-surface px-2 py-1" /></label>

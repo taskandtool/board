@@ -37,6 +37,8 @@ test("due state reads from the card, not the clock", () => {
 test("CSV export quotes and neutralises formulas", () => {
   const out = toCsv([["a", "b"], ['say "hi"', "=SUM(A1)"], ["x,y", "-1"]]);
   assert.equal(out, 'a,b\r\n"say ""hi""",\'=SUM(A1)\r\n"x,y",\'-1\r\n');
+  // A spreadsheet may trim leading spaces and line breaks, and reads a full-width sign as one.
+  assert.equal(toCsv([[" =1", "\uFF1D1", "\n=1", "\tx", "plain"]]), '\' =1,\'\uFF1D1,"\'\n=1",\'\tx,plain\r\n');
 });
 
 test("CSV import parses quotes and guesses the mapping", () => {

@@ -42,7 +42,8 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
         <a href={qs({ group: group ? "" : "1" })} class={"text-label no-underline " + (group ? "font-semibold" : "text-ink-2")}>Group by column</a>
         <a href={`/b/${board.key}/export.csv`} class="ml-auto text-label text-ink-2">Export CSV</a>
       </div>
-      <table class="mt-3 w-full border-collapse text-copy">
+      <div class="mt-3 overflow-x-auto">
+      <table class="w-full border-collapse text-copy">
         <thead>
           <tr class="border-b border-line-strong text-left text-label text-ink-3">
             <th class="py-1 pr-3">{vocab.one}</th>
@@ -64,6 +65,7 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
           {items.length === 0 ? <tr><td colspan={7} class="py-6 text-center text-ink-3">Nothing here yet</td></tr> : null}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

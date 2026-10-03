@@ -183,11 +183,15 @@ app.get("/b/:board/export.csv", async (c) => {
 });
 
 // A cell that starts like a formula gets a leading apostrophe, so a
-// spreadsheet opens the export as text rather than running it.
+// spreadsheet opens the export as text rather than running it: a formula
+// sign, its full-width form, or one after leading spaces or line breaks (a
+// spreadsheet may trim those first), or a tab or CR at the start.
+const FORMULA = /^[\s\u3000]*[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]|^[\t\r\n]/;
+
 export function toCsv(rows: unknown[][]): string {
   const cell = (v: unknown) => {
     let s = v == null ? "" : String(v);
-    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    if (FORMULA.test(s)) s = "'" + s;
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return rows.map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";

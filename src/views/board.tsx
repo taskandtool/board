@@ -143,7 +143,7 @@ export function Card({ item, columns, board, user, refresh }: { item: Item; colu
         </a>
         {user ? (
           <details class="relative shrink-0">
-            <summary class="cursor-pointer list-none rounded-control px-1 text-ink-3 opacity-60 hover:bg-panel hover:opacity-100 group-focus-within:opacity-100" aria-label={`Actions for ${item.title}`}>···</summary>
+            <summary class="min-h-6 min-w-6 cursor-pointer list-none rounded-control px-1 text-center text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}>···</summary>
             <div class="absolute right-0 z-20 mt-1 flex w-48 flex-col rounded-card border border-line bg-surface p-1 text-label shadow-lift">
               {others.map((c) => (
                 <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">

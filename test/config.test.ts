@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { validate } from "../src/config";
 
-const good = () => JSON.parse(readFileSync("board.config.json", "utf8"));
+// The config the board ships with; every test runs against it (pin-config.mjs).
+const good = () => JSON.parse(readFileSync("test/fixtures/board.config.json", "utf8"));
+
+test("the live config is valid", () => {
+  assert.deepEqual(validate(JSON.parse(readFileSync("board.config.json", "utf8"))), []);
+});
 
 test("the shipped config is valid", () => {
   assert.deepEqual(validate(good()), []);

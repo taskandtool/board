@@ -18,7 +18,7 @@ carries meaning. `npm run check` enforces the parts that can be checked.
 | `--color-late` / `late-ink` | A card past its date. |
 | `--color-warn` / `warn-ink` | Due today or soon, urgent, a column over its limit. |
 | `--color-tag-0` to `tag-6` | The tag palette; `tag-0` is a tag the config does not name. All take `--color-ink`. |
-| `--color-line` / `line-strong` | Hairlines; input and table edges. |
+| `--color-line` / `line-strong` | Hairlines; input, button and table edges. `line-strong` keeps 3:1 on every ground, the floor for a control's edge. |
 
 Change a value in `styles/theme.css` and keep its row here. The Tailwind
 default palette is off, so `bg-blue-500` does not exist; add a role.

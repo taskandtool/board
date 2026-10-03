@@ -28,7 +28,7 @@ export function ItemView({ data }: { data: ItemData }) {
           <a href={`/b/${board.key}`} class="rounded-control px-2 py-1 text-ink-3 no-underline hover:bg-panel">← {board.name}</a>
         )}
         <span class="ml-auto text-label text-ink-3">#{item.id}{item.is_sample ? " · example" : ""}{item.archived_at ? " · archived" : ""}</span>
-        {!drawer ? null : <a href={url} class="text-label text-ink-3" title="Open as its own page">↗</a>}
+        {!drawer ? null : <a href={url} class="inline-flex min-h-6 min-w-6 items-center justify-center rounded-control text-label text-ink-3 no-underline hover:bg-panel" title="Open as its own page" aria-label="Open as its own page">↗</a>}
       </div>
 
       <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-2 flex flex-col gap-3">
@@ -117,7 +117,7 @@ export function ItemView({ data }: { data: ItemData }) {
         <ol class="mt-2 flex flex-col gap-1 text-label">
           {activity.map((a) => (
             <li class={a.kind === "comment" ? "rounded-card bg-panel px-2 py-1" : "px-2 text-ink-3"}>
-              <span class="text-ink-2">{a.who ?? "board"}</span> {describe(a, columns)}
+              <span class="text-ink-2">{a.who ?? "board"}</span>{a.kind === "comment" ? "" : " "}{describe(a, columns)}
               <span class="text-ink-3" title={new Date(a.at).toISOString()}> · {ago(a.at)}</span>
             </li>
           ))}
@@ -155,7 +155,7 @@ function Checklist({ item, ro, target }: { item: Item; ro: boolean; target: stri
               <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="ml-auto">
                 <input type="hidden" name="action" value="remove" />
                 <input type="hidden" name="index" value={i} />
-                <button class="px-1 text-ink-3 hover:text-ink" aria-label={`Remove ${c.text}`}>×</button>
+                <button class="min-h-6 min-w-6 rounded-control px-1 text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Remove ${c.text}`}>×</button>
               </form>
             ) : null}
           </li>
