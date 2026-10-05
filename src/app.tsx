@@ -69,7 +69,7 @@ function sameOrigin(c: C): boolean {
 
 const isHx = (c: C) => c.req.header("hx-request") === "true";
 // A `return` field is a path on this board, never a host: "//evil" is not a path.
-const localPath = (p: string, fallback: string) => (p.startsWith("/") && !p.startsWith("//") && !p.includes("\\") ? p : fallback);
+export const localPath = (p: string, fallback: string) => (p.startsWith("/") && !p.startsWith("//") && !p.includes("\\") ? p : fallback);
 const num = (v: unknown) => (typeof v === "string" && /^\d+$/.test(v) ? Number(v) : NaN);
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
