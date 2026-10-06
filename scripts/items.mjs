@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-// Entry point: runs scripts/items.ts under tsx so it can share the app's own
-// TypeScript (queries, config) without a build step. --help for usage.
-import { spawnSync } from "node:child_process";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-const here = dirname(fileURLToPath(import.meta.url));
-const r = spawnSync(join(here, "..", "node_modules", ".bin", "tsx"), [join(here, "items.ts"), ...process.argv.slice(2)], { stdio: "inherit", cwd: join(here, "..") });
-process.exit(r.status ?? 1);
+// Runs scripts/items.ts (see run.mjs). --help for usage.
+import { run } from "./run.mjs";
+run(import.meta.url);

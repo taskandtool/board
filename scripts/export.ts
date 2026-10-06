@@ -1,11 +1,19 @@
 // CSV out, the same shape the board's Export link produces.
-import { parseArgs, flag, has, withDb, resolveBoard } from "./lib";
+import { flag, has } from "../src/data/cli.mjs";
+import { args, plain, withDb, resolveBoard } from "./lib";
 import { toCsv } from "../src/app";
 import * as Q from "../src/db/queries";
 import { cfg } from "../src/config";
 
-const a = parseArgs(process.argv.slice(2));
-if (has(a, "help")) { console.log("export.mjs [--board key] [--archived]   prints the board as CSV"); process.exit(0); }
+const HELP = `export.mjs [--board key] [--archived]
+
+Prints the board's cards as CSV on stdout, one row per card, the same shape
+as the board's Export link: node scripts/export.mjs > board.csv.
+--board is needed once there is more than one board; --archived exports the
+archived cards instead.`;
+
+const a = args(["archived"]);
+plain(a, HELP, ["board", "archived"]);
 
 await withDb(async (pool) => {
   const board = await resolveBoard(pool, flag(a, "board"));

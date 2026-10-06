@@ -8,7 +8,7 @@
 //   - no em dashes in the interface copy
 //   - only the dev-only files under src/ import a Node built-in, so the
 //     code production runs on Cloudflare stays portable
-//   - the manifest and the skill adapter are in place
+//   - the manifest, the skill and its adapter, the vendored scripts are there
 //   - the typecheck passes
 // Exit 1 with the findings when something is off.
 import { spawnSync } from "node:child_process";
@@ -53,7 +53,8 @@ const refuse = [
   [/\bfont-(bold|extrabold|black)\b/, "a weight above semibold"],
   [/\btext-\[(?!clamp)/, "an arbitrary text size: add a --text-* token"],
 ];
-for (const file of walk("src").filter((f) => f.endsWith(".tsx"))) {
+const isTest = (f) => f.includes("/test/");
+for (const file of walk("src").filter((f) => f.endsWith(".tsx") && !isTest(f))) {
   const src = readFileSync(file, "utf8");
   for (const [rx, why] of refuse) {
     const m = src.match(rx);
@@ -67,8 +68,10 @@ for (const file of walk("src").filter((f) => f.endsWith(".tsx"))) {
 // production runs the same app on Cloudflare: Node built-ins only in the
 // files that run in dev alone
 const nodeOnly = new Set(["src/server.ts", "src/db/client.ts", "src/db/migrate.ts"]);
-for (const file of walk("src").filter((f) => /\.tsx?$/.test(f) && !nodeOnly.has(f))) {
-  const m = readFileSync(file, "utf8").match(/from "(node:[a-z_/]+)"/);
+for (const file of walk("src").filter((f) => /\.tsx?$/.test(f) && !nodeOnly.has(f) && !isTest(f))) {
+  // Imports only: a comment that shows a Node import is not one.
+  const code = readFileSync(file, "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l)).join("\n");
+  const m = code.match(/from "(node:[a-z_/]+)"/);
   if (m) findings.push(`${file} imports ${m[1]}: production on Cloudflare runs this file; only ${[...nodeOnly].join(", ")} may`);
 }
 

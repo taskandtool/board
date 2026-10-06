@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { cleanChecklist, cleanDate, cleanTags, cleanTitle, clampPriority, dueState, slugify } from "../src/db/queries";
 import { toCsv } from "../src/app";
 import { guessMap, parseCsv, parseDate, parsePriority } from "../scripts/csv";
-import { parseArgs } from "../scripts/lib";
+import { flag, flags, parseArgs } from "../src/data/cli.mjs";
 import { sortItems } from "../src/views/list";
 
 test("titles, tags, dates and priorities are cleaned, never trusted", () => {
@@ -55,9 +55,11 @@ test("CSV import parses quotes and guesses the mapping", () => {
 });
 
 test("arguments: repeated flags collect, bare flags are true", () => {
-  const a = parseArgs(["add", "Roof", "--tag", "a", "--tag=b", "--json", "--due", "2026-01-01"]);
+  const a = parseArgs(["add", "Roof", "--tag", "a", "--tag=b", "--json", "--due", "2026-01-01", "--field", "address=1 Main St, Austin", "--field", "crew=North"]);
   assert.deepEqual(a._, ["add", "Roof"]);
-  assert.equal(a.flags.tag, "a,b");
+  assert.deepEqual(flags(a, "tag"), ["a", "b"]);
+  assert.equal(flag(a, "tag"), "b");
+  assert.deepEqual(flags(a, "field"), ["address=1 Main St, Austin", "crew=North"]);
   assert.equal(a.flags.json, true);
   assert.equal(a.flags.due, "2026-01-01");
 });

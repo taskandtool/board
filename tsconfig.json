@@ -8,6 +8,7 @@
     "jsxImportSource": "hono/jsx",
     "strict": true,
     "resolveJsonModule": true,
+    "allowJs": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node"]

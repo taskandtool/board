@@ -38,7 +38,7 @@ type Q = pg.Pool | pg.PoolClient;
 
 export const PRIORITIES = ["Normal", "High", "Urgent"] as const;
 export const STALE_DAYS = 3;
-const KEY = /^[a-z0-9][a-z0-9_-]{0,39}$/;
+export const KEY = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 
 export function slugify(name: string): string {
   const s = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
