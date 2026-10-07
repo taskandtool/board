@@ -67,9 +67,8 @@ spreadsheet to import: [references/import.md](references/import.md).
 ## Dev, on this machine
 
 ```bash
-sprite-env services get web                          # definition, status, restart_count
+python3 ~/tools/taskandtool.py logs                  # state and the end of the log
 curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/healthz   # 200 once the database is ready
-tail -50 /.sprite/logs/services/web.log
 ```
 
 The server comes up without a database and shows one page saying so; it
