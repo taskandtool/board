@@ -19,6 +19,9 @@
         // start on the title link and a drop never also opens the card.
         forceFallback: true,
         fallbackTolerance: 4,
+        // On a phone a swipe across a card scrolls the board; press and hold to drag.
+        delay: 250,
+        delayOnTouchOnly: true,
         filter: "button, input, details, summary",
         preventOnFilter: false,
         onStart() { window.boardBusy = true; },
