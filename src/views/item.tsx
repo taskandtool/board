@@ -7,6 +7,7 @@ import { PRIORITIES } from "../db/queries";
 import { formatDate } from "./board";
 import { vocab } from "./layout";
 import { ago } from "./list";
+import { button, control, primary } from "./ui";
 
 export type ItemData = { item: Item; board: Board; columns: Status[]; activity: Activity[]; people: Person[]; user: string | null; drawer: boolean };
 
@@ -18,7 +19,6 @@ export function ItemView({ data }: { data: ItemData }) {
   const assignees = [...people.map((p) => p.email)];
   if (item.assignee && !assignees.includes(item.assignee)) assignees.push(item.assignee);
   if (user && !assignees.includes(user)) assignees.push(user);
-  const ro = !user;
   return (
     <div id="item" class={drawer ? "p-4" : "mx-auto max-w-3xl"}>
       <div class="flex items-start gap-2">
@@ -32,19 +32,19 @@ export function ItemView({ data }: { data: ItemData }) {
       </div>
 
       <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-2 flex flex-col gap-3">
-        <input name="title" value={item.title} required maxlength={200} disabled={ro} class="w-full rounded-control border border-transparent bg-transparent px-1 py-1 text-title font-semibold hover:border-line focus:border-line-strong focus:bg-surface" aria-label="Title" />
+        <input name="title" value={item.title} required maxlength={200} class="w-full rounded-control border border-transparent bg-transparent px-1 py-1 text-title font-semibold hover:border-line focus:border-line-strong focus:bg-surface" aria-label="Title" />
 
         <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-label sm:grid-cols-3">
           <label class="flex flex-col gap-1">
             <span class="text-ink-3">Column</span>
-            <select name="status_id" disabled={ro} onchange="this.form.requestSubmit()" class="rounded-control border border-line-strong bg-surface px-2 py-1">
+            <select name="status_id" onchange="this.form.requestSubmit()" class={control}>
               {columns.map((c) => <option value={c.id} selected={c.id === item.status_id}>{c.label}</option>)}
             </select>
           </label>
           {showsField("assignee") ? (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">Assignee</span>
-              <select name="assignee" disabled={ro} onchange="this.form.requestSubmit()" class="rounded-control border border-line-strong bg-surface px-2 py-1">
+              <select name="assignee" onchange="this.form.requestSubmit()" class={control}>
                 <option value="">Unassigned</option>
                 {assignees.map((e) => <option value={e} selected={item.assignee === e}>{people.find((p) => p.email === e)?.name || e}</option>)}
               </select>
@@ -53,13 +53,13 @@ export function ItemView({ data }: { data: ItemData }) {
           {showsField("due_on") ? (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">Due</span>
-              <input type="date" name="due_on" value={item.due_on ?? ""} disabled={ro} onchange="this.form.requestSubmit()" class="rounded-control border border-line-strong bg-surface px-2 py-1" />
+              <input type="date" name="due_on" value={item.due_on ?? ""} onchange="this.form.requestSubmit()" class={control} />
             </label>
           ) : null}
           {showsField("priority") ? (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">Priority</span>
-              <select name="priority" disabled={ro} onchange="this.form.requestSubmit()" class="rounded-control border border-line-strong bg-surface px-2 py-1">
+              <select name="priority" onchange="this.form.requestSubmit()" class={control}>
                 {PRIORITIES.map((p, i) => <option value={i} selected={item.priority === i}>{p}</option>)}
               </select>
             </label>
@@ -67,26 +67,26 @@ export function ItemView({ data }: { data: ItemData }) {
           {showsField("tags") ? (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">Tags, comma separated</span>
-              <input name="tags" value={item.tags.join(", ")} disabled={ro} list="tag-names" class="rounded-control border border-line-strong bg-surface px-2 py-1" />
+              <input name="tags" value={item.tags.join(", ")} list="tag-names" class={control} />
               <datalist id="tag-names">{cfg.tags.map((t) => <option value={t.name} />)}</datalist>
             </label>
           ) : null}
           {showsField("customer_ref") ? (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">Customer</span>
-              <input name="customer_ref" value={item.customer_ref ?? ""} disabled={ro} maxlength={200} class="rounded-control border border-line-strong bg-surface px-2 py-1" />
+              <input name="customer_ref" value={item.customer_ref ?? ""} maxlength={200} class={control} />
             </label>
           ) : null}
           {cfg.card.custom.map((f) => (
             <label class="flex flex-col gap-1">
               <span class="text-ink-3">{f.label}</span>
               {f.type === "select" ? (
-                <select name={`field_${f.key}`} disabled={ro} onchange="this.form.requestSubmit()" class="rounded-control border border-line-strong bg-surface px-2 py-1">
+                <select name={`field_${f.key}`} onchange="this.form.requestSubmit()" class={control}>
                   <option value=""></option>
                   {(f.options ?? []).map((o) => <option value={o} selected={item.fields[f.key] === o}>{o}</option>)}
                 </select>
               ) : (
-                <input type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"} name={`field_${f.key}`} value={item.fields[f.key] ?? ""} disabled={ro} maxlength={500} class="rounded-control border border-line-strong bg-surface px-2 py-1" />
+                <input type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"} name={`field_${f.key}`} value={item.fields[f.key] ?? ""} maxlength={500} class={control} />
               )}
             </label>
           ))}
@@ -94,50 +94,44 @@ export function ItemView({ data }: { data: ItemData }) {
 
         <label class="flex flex-col gap-1 text-label">
           <span class="text-ink-3">Notes</span>
-          <textarea name="notes" rows={5} disabled={ro} maxlength={20000} class="rounded-control border border-line-strong bg-surface px-2 py-1 text-copy">{item.notes}</textarea>
+          <textarea name="notes" rows={5} maxlength={20000} class={"text-copy " + control}>{item.notes}</textarea>
         </label>
-        {!ro ? (
-          <div class="flex items-center gap-2 text-label">
-            <button class="rounded-control bg-accent px-3 py-1 text-accent-ink">Save</button>
-            <span class="text-ink-3">{col?.label}{item.completed_at ? ` · finished ${formatDate(new Date(item.completed_at).toISOString().slice(0, 10))}` : ""}</span>
-          </div>
-        ) : null}
+        <div class="flex items-center gap-2 text-label">
+          <button class={primary}>Save</button>
+          <span class="text-ink-3">{col?.label}{item.completed_at ? ` · finished ${formatDate(new Date(item.completed_at).toISOString().slice(0, 10))}` : ""}</span>
+        </div>
       </form>
 
-      {showsField("checklist") ? <Checklist item={item} ro={ro} target={target} /> : null}
+      {showsField("checklist") ? <Checklist item={item} target={target} /> : null}
 
       <section class="mt-4">
         <h3 class="text-label font-semibold text-ink-3">Comments and activity</h3>
-        {!ro ? (
-          <form method="post" action={`${url}/comment`} hx-post={`${url}/comment`} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2">
-            <input name="body" required maxlength={5000} placeholder="Write a comment" class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Comment" />
-            <button class="rounded-control border border-line-strong px-3 py-1 text-label">Post</button>
-          </form>
-        ) : null}
+        <form method="post" action={`${url}/comment`} hx-post={`${url}/comment`} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2">
+          <input name="body" required maxlength={5000} placeholder="Write a comment" class={"w-full " + control} aria-label="Comment" />
+          <button class={"text-label " + button}>Post</button>
+        </form>
         <ol class="mt-2 flex flex-col gap-1 text-label">
           {activity.map((a) => (
             <li class={a.kind === "comment" ? "rounded-card bg-panel px-2 py-1" : "px-2 text-ink-3"}>
-              <span class="text-ink-2">{a.who ?? "board"}</span>{a.kind === "comment" ? "" : " "}{describe(a, columns)}
+              <span class="text-ink-2">{a.who ?? "Someone"}</span>{a.kind === "comment" ? "" : " "}{describe(a, columns)}
               <span class="text-ink-3" title={new Date(a.at).toISOString()}> · {ago(a.at)}</span>
             </li>
           ))}
         </ol>
       </section>
 
-      {!ro ? (
-        <div class="mt-4 flex gap-2 text-label">
-          {item.archived_at ? (
-            <form method="post" action={`${url}/restore`} hx-post={`${url}/restore`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1">Restore to {board.name}</button></form>
-          ) : (
-            <form method="post" action={`${url}/archive`} hx-post={`${url}/archive`} hx-target={target} hx-swap="outerHTML"><button class="rounded-control border border-line-strong px-3 py-1 text-ink-2">Archive</button></form>
-          )}
-        </div>
-      ) : null}
+      <div class="mt-4 flex gap-2 text-label">
+        {item.archived_at ? (
+          <form method="post" action={`${url}/restore`} hx-post={`${url}/restore`} hx-target={target} hx-swap="outerHTML"><button class={button}>Restore to {board.name}</button></form>
+        ) : (
+          <form method="post" action={`${url}/archive`} hx-post={`${url}/archive`} hx-target={target} hx-swap="outerHTML"><button class={"text-ink-2 " + button}>Archive</button></form>
+        )}
+      </div>
     </div>
   );
 }
 
-function Checklist({ item, ro, target }: { item: Item; ro: boolean; target: string }) {
+function Checklist({ item, target }: { item: Item; target: string }) {
   const url = `/items/${item.id}/checklist`;
   return (
     <section class="mt-4">
@@ -148,26 +142,22 @@ function Checklist({ item, ro, target }: { item: Item; ro: boolean; target: stri
             <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="flex items-center gap-2">
               <input type="hidden" name="action" value="toggle" />
               <input type="hidden" name="index" value={i} />
-              <input type="checkbox" checked={c.done} disabled={ro} onchange="this.form.requestSubmit()" aria-label={c.text} />
+              <input type="checkbox" checked={c.done} onchange="this.form.requestSubmit()" aria-label={c.text} />
             </form>
             <span class={c.done ? "text-ink-3 line-through" : ""}>{c.text}</span>
-            {!ro ? (
-              <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="ml-auto">
-                <input type="hidden" name="action" value="remove" />
-                <input type="hidden" name="index" value={i} />
-                <button class="min-h-6 min-w-6 rounded-control px-1 text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Remove ${c.text}`}>×</button>
-              </form>
-            ) : null}
+            <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="ml-auto">
+              <input type="hidden" name="action" value="remove" />
+              <input type="hidden" name="index" value={i} />
+              <button class="min-h-6 min-w-6 rounded-control px-1 text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Remove ${c.text}`}>×</button>
+            </form>
           </li>
         ))}
       </ol>
-      {!ro ? (
-        <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2 text-label">
-          <input type="hidden" name="action" value="add" />
-          <input name="text" required maxlength={300} placeholder="Add a step" class="w-full rounded-control border border-line-strong bg-surface px-2 py-1" aria-label="Checklist step" />
-          <button class="rounded-control border border-line-strong px-3 py-1">Add</button>
-        </form>
-      ) : null}
+      <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-1 flex gap-2 text-label">
+        <input type="hidden" name="action" value="add" />
+        <input name="text" required maxlength={300} placeholder="Add a step" class={"w-full " + control} aria-label="Checklist step" />
+        <button class={button}>Add</button>
+      </form>
     </section>
   );
 }

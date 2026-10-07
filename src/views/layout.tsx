@@ -1,8 +1,9 @@
 // The document around every page: head, header with the board switcher and
-// the view toggle, the read-only notice, the drawer and toast slots.
+// the view toggle, who is signed in, the drawer and toast slots.
 import type { Child } from "hono/jsx";
 import { cfg } from "../config";
 import type { Board } from "../db/queries";
+import { control, primary } from "./ui";
 
 export type Shell = { boards: Board[]; board?: Board | null; view: "board" | "list" | "columns" | "item" | "archive"; user: string | null };
 
@@ -32,15 +33,13 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
                   {b.name}
                 </a>
               ))}
-              {user ? (
-                <details class="relative">
-                  <summary class="cursor-pointer list-none rounded-control px-2 py-1 text-ink-3 hover:bg-panel" aria-label="New board">+</summary>
-                  <form method="post" action="/boards" class="absolute left-0 z-20 mt-1 flex w-64 gap-2 rounded-card border border-line bg-surface p-2 shadow-lift">
-                    <input name="name" required maxlength={60} placeholder="New board name" class="w-full rounded-control border border-line-strong px-2 py-1" aria-label="New board name" />
-                    <button class="rounded-control bg-accent px-3 py-1 text-accent-ink">Add</button>
-                  </form>
-                </details>
-              ) : null}
+              <details class="relative">
+                <summary class="cursor-pointer list-none rounded-control px-2 py-1 text-ink-3 hover:bg-panel" aria-label="New board">+</summary>
+                <form method="post" action="/boards" class="absolute left-0 z-20 mt-1 flex w-64 gap-2 rounded-card border border-line bg-surface p-2 shadow-lift">
+                  <input name="name" required maxlength={60} placeholder="New board name" class={"w-full " + control} aria-label="New board name" />
+                  <button class={primary}>Add</button>
+                </form>
+              </details>
             </nav>
             <div class="ml-auto flex min-w-0 flex-wrap items-center gap-1 text-label">
               {board ? (
@@ -51,14 +50,9 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
                   <a href={`${base}/archive`} class={"rounded-control px-2 py-1 no-underline " + (view === "archive" ? "bg-panel" : "text-ink-2 hover:bg-panel")}>Archive</a>
                 </>
               ) : null}
-              <span class="ml-3 max-w-40 truncate text-ink-3" title={user ? "Signed in through Task & Tool" : "No identity reached the board"}>{user ?? "Read only"}</span>
+              {user ? <span class="ml-3 hidden max-w-40 truncate text-ink-3 sm:inline" title="Signed in through Task & Tool">{user}</span> : null}
             </div>
           </div>
-          {!user ? (
-            <p class="border-t border-line bg-panel px-4 py-1 text-label text-ink-2">
-              Read only. Changes need a signed-in team member: open the board through Task & Tool with the project set to Team only.
-            </p>
-          ) : null}
         </header>
         <main id="main" class="px-4 py-3">{children}</main>
         <aside id="drawer" class="fixed inset-y-0 right-0 z-30 w-full max-w-xl overflow-y-auto border-l border-line bg-surface shadow-lift empty:hidden" aria-live="polite"></aside>

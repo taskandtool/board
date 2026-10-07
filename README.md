@@ -61,8 +61,8 @@ call things does.
   machine, builds `dist/` and `build/worker.mjs` (the same Hono app, `pg`
   over Cloudflare's sockets with `nodejs_compat`), and deploys both. The
   first deploy opens it to the team. Either way Task & Tool tells the board
-  who is signed in, and that is the whole login. Without an identity the
-  board is read only.
+  who is signed in, so the board knows who did what. Whoever can open it
+  can change it; published to anyone, that is anyone with the link.
 - Anywhere else: `npm install`, put `DATABASE_URL` (any Postgres) and
   `BOARD_USER=<your email>` in `.env`, then `npm run dev` and open
   `localhost:3000`. `npm run check` and `npm test` are the checks; the
@@ -73,9 +73,9 @@ call things does.
 ```
 board.config.json        the levers: words, boards and columns, tags, fields, view, archive age
 migrations/              the schema, numbered SQL, applied once each at start
-src/app.tsx              the Hono app: identity, the read-only rule, the routes
+src/app.tsx              the Hono app: identity, the routes
 src/db/                  client (pg, the late-database rule), migrate, seed, queries
-src/views/               layout, board, list, item, columns and archive
+src/views/               layout, board, list, item, columns and archive; ui.ts the control classes
 scripts/                 items, board, import, export, migrate (--help), check, dev, vendor
 styles/  static/         the tokens and the stylesheet; the built CSS, vendored htmx and SortableJS, board.js
 examples/                contractor, realtor, recruiter configs

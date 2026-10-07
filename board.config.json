@@ -2,8 +2,8 @@
   "business": "to fill",
   "vocabulary": {
     "item": {
-      "one": "Item",
-      "many": "Items"
+      "one": "Task",
+      "many": "Tasks"
     }
   },
   "boards": [

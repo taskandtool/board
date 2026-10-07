@@ -54,7 +54,7 @@ npm run check                                          # "check: ok", or exit 1 
   service start.
 - `src/db/queries.ts` is every query the board runs, named. Routes,
   scripts and tests all go through it.
-- `src/app.tsx` is the Hono app: identity, the read-only rule, the routes.
+- `src/app.tsx` is the Hono app: identity, the routes.
   `src/views/` are the pages and partials. `src/server.ts` is dev's entry
   (Node, with `src/db/client.ts`); `src/worker.ts` is production's
   (Cloudflare). `src/runtime.ts` is all that differs between them; `npm run
@@ -87,8 +87,9 @@ npm run check                                          # "check: ok", or exit 1 
   a new numbered migration, never an edit to an old one; the rest of the
   table rules are the `data` skill's.
 - Identity comes from the platform. Task & Tool sets `X-TaskTool-User` from
-  a signed-in team member; the board builds no login, and with no identity it
-  is read only. Never weaken that.
+  a signed-in team member; the board builds no login. Identity names who did
+  what; it never gates an edit. Whoever can open the board can change it, and
+  who can open it is the app's publishing setting on Task & Tool.
 - Colours and sizes are tokens in `styles/theme.css`. Markup never carries
   a hex value or a Tailwind default colour; `npm run check` refuses both.
   No em dashes in interface copy.

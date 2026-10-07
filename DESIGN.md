@@ -31,6 +31,9 @@ buttons). Weights: normal and semibold. Radii: `rounded-control` for
 inputs and buttons, `rounded-card` for cards and panels. Depth:
 `shadow-card` on a card at rest, `shadow-lift` on something that floats.
 
+Controls (inputs, buttons, menu items) take their classes from
+`src/views/ui.ts`; change a control's look there, once.
+
 ## Composition
 
 - The board is a horizontal row of columns; it scrolls sideways on a phone

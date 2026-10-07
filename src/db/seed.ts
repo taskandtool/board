@@ -7,11 +7,11 @@ import type pg from "pg";
 import { cfg } from "../config";
 
 const EXAMPLES = [
-  { col: 0, title: "This is a card. Open it", notes: "A card is one piece of work: a job, a listing, a candidate, a ticket. Open it for notes, a due date, an assignee, a priority, tags, a checklist and comments. The title is enough to start; the rest can wait." },
-  { col: 0, title: "Drag cards between columns", notes: "Drag a card to the column it belongs in, or open its menu (the three dots) and pick Move to. Both do the same thing and both are recorded in the card's activity." },
-  { col: 1, title: "Columns are yours to change", notes: "Edit columns, top right: add one, rename one, set a limit on how many cards a column should hold at once, say which columns count as done. A column over its limit shows it; it never refuses a card." },
-  { col: 1, title: "Ask the AI in chat", notes: "The AI can add, move, find and summarise cards without opening the board: \"add a job for the Smith roof, due Friday\" is enough. Ask it to shape the board for your business and it will set the words, columns and fields." },
-  { col: 2, title: "Remove these examples when you are done", notes: "Every example card is marked as one. The Remove examples action in the board menu deletes them all at once, and it disappears when they are gone." },
+  { col: 0, title: "Click a card to open it", notes: "Each card is one piece of work. Open it to add notes, a due date, who it's assigned to, a priority, tags, a checklist and comments. Only the title is required." },
+  { col: 0, title: "Drag a card to another column", notes: "Try it with this one. The dots on a card open the same moves as a menu. Each move goes into the card's history, with who made it." },
+  { col: 1, title: "Change the columns to fit your work", notes: "Edit columns, at the top right, adds, renames and reorders columns. Give a column a limit and its count turns yellow when it holds too many; it still takes the card." },
+  { col: 1, title: "Ask the AI to update the board", notes: "In chat, try \"add a job for the Smith roof, due Friday\" or \"what's overdue?\". Ask it to set the board up for your business and it changes the columns, the names and the fields on each card." },
+  { col: 2, title: "Remove these examples", notes: "Click Remove the examples, under the board. All five go at once." },
 ];
 
 export async function seed(pool: pg.Pool): Promise<void> {

@@ -1,4 +1,4 @@
-// The Hono app: identity, the read-only rule, the routes. Every mutation is
+// The Hono app: identity, the routes. Every mutation is
 // a POST; nothing changes state on a GET. Responses to htmx requests are
 // partials; the same URLs answer a plain browser with a full page.
 import { Hono } from "hono";
@@ -11,7 +11,7 @@ import { ArchiveView, ColumnsView, WaitingView } from "./views/columns";
 import { ItemView } from "./views/item";
 import { Layout, type Shell } from "./views/layout";
 import { ListView, sortItems, type Sort } from "./views/list";
-import type { AppEnv } from "./runtime";
+import type { AppEnv, Runtime } from "./runtime";
 
 type C = Context<AppEnv>;
 const app = new Hono<AppEnv>();
@@ -20,13 +20,13 @@ const seen = new Map<string, number>();
 
 // Identity: the platform sets X-TaskTool-User from a verified session and
 // strips any copy a client sent, so the header is trusted here. Off
-// Task & Tool, BOARD_USER stands in. No header and no variable means read
-// only. The database is the runtime's: dev's one pool, or a pool per
-// request in production, closed after the response.
+// Task & Tool, BOARD_USER stands in. It names who did what; it is not a
+// gate. Whoever can open the board can change it, and who can open it is
+// the platform's publishing setting. The database is the runtime's: dev's
+// one pool, or a pool per request in production, closed after the response.
 app.use("*", async (c, next) => {
   const rt = c.env.runtime;
-  const raw = c.req.header("x-tasktool-user") || (rt.onPlatform ? "" : rt.fallbackUser);
-  const user = /^[^\s@]+@[^\s@]+$/.test(raw) ? raw.toLowerCase() : null;
+  const user = identity(c.req.header("x-tasktool-user"), rt);
   c.set("user", user);
   c.header("Cache-Control", "no-store");
   const opened = rt.open();
@@ -42,7 +42,6 @@ app.use("*", async (c, next) => {
       await Q.touchPerson(opened.db, user);
     }
     if (c.req.method !== "GET" && c.req.method !== "HEAD") {
-      if (!user) return c.text("Read only: changes need a signed-in team member.", 403);
       if (!sameOrigin(c)) return c.text("Cross-site request refused.", 403);
     }
     await next();
@@ -50,6 +49,13 @@ app.use("*", async (c, next) => {
     if (opened.close) c.executionCtx.waitUntil(opened.close());
   }
 });
+
+// Who is acting: the platform's header, or off the platform BOARD_USER; an
+// email or no one.
+export function identity(header: string | undefined, rt: Pick<Runtime, "onPlatform" | "fallbackUser">): string | null {
+  const raw = header || (rt.onPlatform ? "" : rt.fallbackUser);
+  return /^[^\s@]+@[^\s@]+$/.test(raw) ? raw.toLowerCase() : null;
+}
 
 // The origin check that stands in for a CSRF token: a browser names its
 // origin on every cross-site POST, and the board only serves its own.
@@ -201,7 +207,7 @@ app.get("/b/:board/columns", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
   const [columns, counts] = await Promise.all([Q.statuses(c.var.db, board.id), Q.columnCounts(c.var.db, board.id)]);
-  return c.html(<Layout title={`${board.name} · columns`} shell={await shell(c, board, "columns")}><ColumnsView board={board} columns={columns} counts={counts} user={c.get("user")} /></Layout>);
+  return c.html(<Layout title={`${board.name} · columns`} shell={await shell(c, board, "columns")}><ColumnsView board={board} columns={columns} counts={counts} /></Layout>);
 });
 
 app.post("/b/:board/columns", async (c) => {
@@ -287,7 +293,7 @@ app.get("/b/:board/archive", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
   const [items, columns] = await Promise.all([Q.archivedItems(c.var.db, board.id), Q.statuses(c.var.db, board.id, true)]);
-  return c.html(<Layout title={`${board.name} · archive`} shell={await shell(c, board, "archive")}><ArchiveView board={board} items={items} columns={columns} user={c.get("user")} archiveAfter={cfg.archive_done_after_days} /></Layout>);
+  return c.html(<Layout title={`${board.name} · archive`} shell={await shell(c, board, "archive")}><ArchiveView board={board} items={items} columns={columns} archiveAfter={cfg.archive_done_after_days} /></Layout>);
 });
 
 async function itemView(c: C, item: Item, status = 200) {

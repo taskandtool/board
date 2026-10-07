@@ -109,4 +109,6 @@ overrides either way (`0` is off).
 Dev and production both need a Task & Tool sign-in unless the owner made
 production public, and both carry the signed-in member's email as
 `X-TaskTool-User`; that header is the board's whole notion of a user
-(assignee, "mine", who did what).
+(assignee, "mine", who did what). It never gates an edit: whoever can open
+the board can change it, so a public production board is editable by anyone
+with the link.

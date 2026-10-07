@@ -176,7 +176,7 @@ await withDb(async (pool) => {
       const acts = await Q.activity(pool, it.id);
       out(json, { item: it, activity: acts }, () => [fmtItem(it, cols), it.notes ? "\n" + it.notes : "", it.checklist.length ? "\nchecklist:\n" + it.checklist.map((c) => `  [${c.done ? "x" : " "}] ${c.text}`).join("\n") : "",
         Object.keys(it.fields).length ? "\nfields: " + Object.entries(it.fields).map(([k, v]) => `${k}=${v}`).join(", ") : "",
-        `\nactivity (${cfg.time_zone}):\n` + (acts.length ? "" : "  none") + acts.map((x) => `  ${localTime(x.at, cfg.time_zone)} ${x.who ?? "board"} ${x.kind}${x.body ? ": " + x.body : ""}${x.from_status ? ` ${x.from_status} -> ${x.to_status}` : ""}`).join("\n")].join(""));
+        `\nactivity (${cfg.time_zone}):\n` + (acts.length ? "" : "  none") + acts.map((x) => `  ${localTime(x.at, cfg.time_zone)} ${x.who ?? "Someone"} ${x.kind}${x.body ? ": " + x.body : ""}${x.from_status ? ` ${x.from_status} -> ${x.to_status}` : ""}`).join("\n")].join(""));
       break;
     }
     case "move": {

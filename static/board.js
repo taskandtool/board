@@ -15,7 +15,11 @@
         animation: 120,
         draggable: "[data-item-id]",
         handle: "[data-item-id]",
-        filter: "a, button, input, details, summary",
+        // Pointer-driven rather than the browser's own drag, so a drag can
+        // start on the title link and a drop never also opens the card.
+        forceFallback: true,
+        fallbackTolerance: 4,
+        filter: "button, input, details, summary",
         preventOnFilter: false,
         onStart() { window.boardBusy = true; },
         onEnd(evt) {
@@ -37,6 +41,17 @@
     });
   }
 
+  // A click anywhere on a card opens it, as its title does; its menu and
+  // anything else interactive inside it keep their own click.
+  const openCard = (card) => {
+    const link = card.querySelector("a[hx-get]");
+    if (link) link.click();
+  };
+  body.addEventListener("click", (e) => {
+    const card = e.target.closest && e.target.closest("[data-item-id]");
+    if (card && !e.target.closest("a, button, details, input, select, textarea, label")) openCard(card);
+  });
+
   // Keyboard on a focused card: arrows move it, Enter opens it.
   body.addEventListener("keydown", (e) => {
     const card = e.target.closest && e.target.closest("[data-item-id]");
@@ -46,8 +61,7 @@
     const ret = board ? board.dataset.refresh : "";
     const post = (values) => htmx.ajax("POST", "/items/" + id + "/move", { target: "#board", swap: "outerHTML", values: Object.assign({ return: ret }, values) });
     if (e.key === "Enter") {
-      const link = card.querySelector("a[hx-get]");
-      if (link) link.click();
+      openCard(card);
     } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
       e.preventDefault();
       window.boardFocus = id;

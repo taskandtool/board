@@ -13,6 +13,5 @@ if (problems.length) {
 }
 
 export const cfg = config as Config;
-export const unfilled = cfg.business.includes("to fill");
 export const tagRole = (name: string) => cfg.tags.find((t) => t.name.toLowerCase() === name.toLowerCase())?.role ?? "tag-0";
 export const showsField = (f: string) => cfg.card.fields.includes(f);
