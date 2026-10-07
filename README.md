@@ -80,7 +80,7 @@ scripts/                 items, board, import, export, migrate (--help), check, 
 styles/  static/         the tokens and the stylesheet; the built CSS, vendored htmx and SortableJS, board.js
 examples/                contractor, realtor, recruiter configs
 test/                    node:test
-.claude/skills/board/    the skill the AI reads; .agents/skills/board/ is the Codex adapter
+.claude/skills/board/    the skill the AI reads (Claude or Codex)
 .taskandtool/setup.sh    what the machine needs; idempotent
 ```
 
