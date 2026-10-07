@@ -21,18 +21,20 @@ export function ItemView({ data }: { data: ItemData }) {
   if (user && !assignees.includes(user)) assignees.push(user);
   return (
     <div id="item" class={drawer ? "p-4" : "mx-auto max-w-3xl"}>
-      <div class="flex items-start gap-2">
+      <div class="flex items-center gap-2">
         {drawer ? (
-          <button type="button" class="rounded-control px-2 py-1 text-ink-3 hover:bg-panel" aria-label="Close" onclick="window.boardCloseDrawer()">←</button>
+          <button type="button" class="-ml-2 rounded-control px-2 py-1 text-ink-3 hover:bg-panel" aria-label="Close" onclick="window.boardCloseDrawer()">←</button>
         ) : (
-          <a href={`/b/${board.key}`} class="rounded-control px-2 py-1 text-ink-3 no-underline hover:bg-panel">← {board.name}</a>
+          <a href={`/b/${board.key}`} class="-ml-2 rounded-control px-2 py-1 text-ink-3 no-underline hover:bg-panel">← {board.name}</a>
         )}
         <span class="ml-auto text-label text-ink-3">#{item.id}{item.is_sample ? " · example" : ""}{item.archived_at ? " · archived" : ""}</span>
         {!drawer ? null : <a href={url} class="inline-flex min-h-6 min-w-6 items-center justify-center rounded-control text-label text-ink-3 no-underline hover:bg-panel" title="Open as its own page" aria-label="Open as its own page">↗</a>}
       </div>
 
+      {/* The back link and the title pull out by their own padding, so their
+          text lines up with the fields under them. */}
       <form method="post" action={url} hx-post={url} hx-target={target} hx-swap="outerHTML" class="mt-2 flex flex-col gap-3">
-        <input name="title" value={item.title} required maxlength={200} class="w-full rounded-control border border-transparent bg-transparent px-1 py-1 text-title font-semibold hover:border-line focus:border-line-strong focus:bg-surface" aria-label="Title" />
+        <input name="title" value={item.title} required maxlength={200} class="-mx-2 w-[calc(100%+1rem)] rounded-control bg-transparent px-2 py-1 text-title font-semibold hover:ring-1 hover:ring-line focus:bg-surface focus:ring-1 focus:ring-line-strong" aria-label="Title" />
 
         <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-label sm:grid-cols-3">
           <label class="flex flex-col gap-1">
