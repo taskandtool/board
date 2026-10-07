@@ -2,8 +2,8 @@
 
 Read when asked to shape the board or to change `board.config.json`.
 
-Read `board.config.json`, the closest of `examples/agency.json`,
-`contractor.json`, `realtor.json` and `recruiter.json` (do not copy it blind), and whatever
+Read `board.config.json`, the closest of `examples/contractor.json`,
+`realtor.json` and `recruiter.json` (do not copy it blind), and whatever
 this project already knows about the business (a Company Brain's notes,
 the owner's words). Ask only what you cannot infer. Then set the keys
 below, write the `business` line, and show the board.
