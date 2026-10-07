@@ -41,7 +41,7 @@ test("a limit of zero, a bad tag role and a select with no options are refused",
 });
 
 test("the example configs are valid", () => {
-  for (const f of ["contractor", "realtor", "recruiter"]) {
+  for (const f of ["agency", "contractor", "realtor", "recruiter"]) {
     assert.deepEqual(validate(JSON.parse(readFileSync(`examples/${f}.json`, "utf8"))), [], f);
   }
 });

@@ -1,0 +1,107 @@
+{
+  "business": "A small agency running client work; one board for onboarding each new client, one for the monthly work after launch; each card is one task for one client.",
+  "vocabulary": {
+    "item": {
+      "one": "Task",
+      "many": "Tasks"
+    }
+  },
+  "boards": [
+    {
+      "key": "onboarding",
+      "name": "Onboarding",
+      "columns": [
+        {
+          "key": "kickoff",
+          "label": "Kickoff"
+        },
+        {
+          "key": "in-progress",
+          "label": "In progress",
+          "wip_limit": 6
+        },
+        {
+          "key": "review",
+          "label": "Review"
+        },
+        {
+          "key": "live",
+          "label": "Live",
+          "is_done": true
+        }
+      ]
+    },
+    {
+      "key": "monthly",
+      "name": "Monthly work",
+      "columns": [
+        {
+          "key": "planned",
+          "label": "Planned"
+        },
+        {
+          "key": "doing",
+          "label": "Doing",
+          "wip_limit": 8
+        },
+        {
+          "key": "with-client",
+          "label": "With client"
+        },
+        {
+          "key": "sent",
+          "label": "Sent",
+          "is_done": true
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Design",
+      "role": "tag-1"
+    },
+    {
+      "name": "Content",
+      "role": "tag-2"
+    },
+    {
+      "name": "SEO",
+      "role": "tag-3"
+    },
+    {
+      "name": "Ads",
+      "role": "tag-4"
+    }
+  ],
+  "card": {
+    "fields": [
+      "due_on",
+      "assignee",
+      "priority",
+      "tags",
+      "checklist",
+      "customer_ref"
+    ],
+    "custom": [
+      {
+        "key": "client",
+        "label": "Client",
+        "type": "text"
+      },
+      {
+        "key": "deliverable",
+        "label": "Deliverable link",
+        "type": "text"
+      },
+      {
+        "key": "hours",
+        "label": "Hours",
+        "type": "number"
+      }
+    ]
+  },
+  "default_view": "board",
+  "archive_done_after_days": 60,
+  "time_zone": "America/New_York"
+}

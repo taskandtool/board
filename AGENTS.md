@@ -49,7 +49,7 @@ npm run check                                          # "check: ok", or exit 1 
   the boards and columns seeded on first run, the tag palette, which
   fields a card shows, custom fields, the default view, the archive age,
   the business's time zone.
-  `examples/` holds three worked configs (JSON) to read, not a switch.
+  `examples/` holds four worked configs (JSON) to read, not a switch.
 - `migrations/` is the schema as numbered SQL files, applied once each at
   service start.
 - `src/db/queries.ts` is every query the board runs, named. Routes,

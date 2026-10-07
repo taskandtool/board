@@ -41,8 +41,8 @@ runs anywhere with Node 20 and a Postgres.
 columns seeded on the first run, the tag palette, which fields a card
 shows, custom fields (`text`, `number`, `date`, `select`), the default
 view, the archive age and the business's time zone (due dates are judged
-there, not on the machine's clock). `examples/` has three worked configs: a
-contractor, a real estate office, a recruiter. Ask the AI to shape the
+there, not on the machine's clock). `examples/` has four worked configs: an
+agency onboarding clients, a contractor, a real estate office, a recruiter. Ask the AI to shape the
 board for your business and it reads them, asks what it cannot infer, and
 sets the config; or edit it yourself and restart.
 
@@ -78,7 +78,7 @@ src/db/                  client (pg, the late-database rule), migrate, seed, que
 src/views/               layout, board, list, item, columns and archive
 scripts/                 items, board, import, export, migrate (--help), check, dev, vendor
 styles/  static/         the tokens and the stylesheet; the built CSS, vendored htmx and SortableJS, board.js
-examples/                contractor, realtor, recruiter configs
+examples/                agency, contractor, realtor, recruiter configs
 test/                    node:test
 .claude/skills/board/    the skill the AI reads; .agents/skills/board/ is the Codex adapter
 .taskandtool/setup.sh    what the machine needs; idempotent
