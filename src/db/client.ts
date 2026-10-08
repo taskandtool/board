@@ -7,17 +7,19 @@
 // appears. Off-platform the file does not exist and the env var is the whole
 // story. This is the only file that knows it runs on Node.
 import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type pg from "pg";
 import type { DbState, Runtime } from "../runtime";
 import { migrate } from "./migrate";
 import { openPool } from "./pool";
 import { seed } from "./seed";
 
-const ENV_FILE = "/home/sprite/.env";
+const ENV_FILE = join(homedir(), ".env");
 
-// On a Task & Tool machine the platform writes /home/sprite/.tasktool; there,
-// identity comes from the platform's header only and BOARD_USER is ignored.
-const onPlatform = (): boolean => existsSync("/home/sprite/.tasktool");
+// On a Task & Tool machine the platform writes ~/.tasktool; there, identity
+// comes from the platform's header only and BOARD_USER is ignored.
+const onPlatform = (): boolean => existsSync(join(homedir(), ".tasktool"));
 
 // How often an open board quietly re-fetches itself. On a Task & Tool
 // machine: never, because a tab left open would hold the sprite awake all
@@ -36,7 +38,7 @@ let lastError = "";
 
 export function databaseUrl(): string | undefined {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  if (!existsSync(ENV_FILE)) return undefined;
+  if (!onPlatform() || !existsSync(ENV_FILE)) return undefined;
   try {
     const line = readFileSync(ENV_FILE, "utf8").split("\n").find((l) => l.startsWith("DATABASE_URL="));
     const raw = line?.slice("DATABASE_URL=".length).trim();
