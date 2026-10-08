@@ -13,8 +13,10 @@ const post = (headers: Record<string, string>, rt = runtime()) =>
   app.request(HOST + "/b/work/items", { method: "POST", body: new URLSearchParams({ title: "x" }), headers: { host: "board.example", "content-type": "application/x-www-form-urlencoded", ...headers } }, { runtime: rt });
 
 test("whoever reaches the board can change it, signed in or not", async () => {
-  assert.notEqual((await post({ origin: HOST })).status, 403);
-  assert.notEqual((await post({ origin: HOST, "x-tasktool-user": "ann@team.example" })).status, 403);
+  // Past every lock to the route itself, which finds no board in the fake
+  // pool: a 404 from the handler, never a refusal before it.
+  assert.equal((await post({ origin: HOST })).status, 404);
+  assert.equal((await post({ origin: HOST, "x-tasktool-user": "ann@team.example" })).status, 404);
 });
 
 test("on the platform only the header names someone; BOARD_USER is for off it", () => {

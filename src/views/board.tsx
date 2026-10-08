@@ -60,7 +60,7 @@ export function BoardView({ data }: { data: BoardData }) {
                 {col.is_done ? <svg class="ml-auto size-4 text-ink-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cards here count as finished"><title>Cards here count as finished</title><path d="M3.5 8.5 6.5 11.5 12.5 5" /></svg> : null}
               </header>
               <ol class="flex min-h-10 flex-col gap-2 px-2 pb-2" data-cards data-status-id={col.id}>
-                {cards.map((it) => <Card item={it} columns={columns} board={board} refresh={refresh} />)}
+                {cards.map((it) => <Card item={it} columns={columns} refresh={refresh} />)}
                 {cards.length === 0 && filtersActive(filters) ? <li class="px-1 py-2 text-label text-ink-3">Nothing matches here</li> : null}
               </ol>
               <details class="px-2 pb-2">
@@ -129,7 +129,7 @@ export function FilterBar({ data, list = false }: { data: BoardData; list?: bool
   );
 }
 
-export function Card({ item, columns, board, refresh }: { item: Item; columns: Status[]; board: Board; refresh: string }) {
+export function Card({ item, columns, refresh }: { item: Item; columns: Status[]; refresh: string }) {
   const due = dueState(item.due_on, item.completed_at);
   const done = item.checklist.filter((c) => c.done).length;
   const col = columns.find((c) => c.id === item.status_id)!;
