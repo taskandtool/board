@@ -46,8 +46,8 @@ contractor, a real estate office, a recruiter. Ask the AI to shape the
 board for your business and it reads them, asks what it cannot infer, and
 sets the config; or edit it yourself and restart.
 
-Columns are rows after the first run (the Edit columns page, or
-`scripts/board.mjs`). A field that deserves a real column is a numbered,
+After the first run, columns are rows, edited on the Edit columns page or
+with `scripts/board.mjs`. A field that deserves a real column is a numbered,
 additive SQL file in `migrations/`. Table names never change; what you
 call things does.
 
@@ -62,7 +62,8 @@ call things does.
   over Cloudflare's sockets with `nodejs_compat`), and deploys both. The
   first deploy opens it to the team. Either way Task & Tool tells the board
   who is signed in, so the board knows who did what. Whoever can open it
-  can change it; published to anyone, that is anyone with the link.
+  can change it; once it is published to anyone, that means anyone with
+  the link.
 - Anywhere else: `npm install`, put `DATABASE_URL` (any Postgres) and
   `BOARD_USER=<your email>` in `.env`, then `npm run dev` and open
   `localhost:3000`. `npm run check` and `npm test` are the checks; the

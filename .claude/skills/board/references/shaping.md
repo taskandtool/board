@@ -10,7 +10,7 @@ below, write the `business` line, and show the board.
 
 Existing cards keep their columns by key. A column you remove from the
 config is not removed from the database; `board.mjs column remove` does
-that, and only when it is empty.
+that, and only when the column is empty.
 
 ## The keys, read once at start
 

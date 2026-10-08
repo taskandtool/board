@@ -17,7 +17,7 @@ is how to change the board.
 - Every mutation is a POST behind the origin check already there.
 - The board's activity trail is the record; never delete rows from
   `activity`.
-- No polling, websockets or realtime mode in dev (Cost, below).
+- No polling, websockets or realtime mode in dev (see Cost, below).
 
 ## The three levers
 
@@ -45,9 +45,9 @@ Everything a business wants changed is in one of these.
    nothing.
 
 3. **A migration**, for a field that deserves a real column (indexed,
-   constrained, joined on), after the `data` skill's table rules. Write
-   `migrations/000N_<words>.sql`, the next number, every statement safe to
-   re-run:
+   constrained, joined on), following the `data` skill's table rules.
+   Write `migrations/000N_<words>.sql` with the next number, every
+   statement safe to re-run:
 
    ```sql
    alter table items add column if not exists address text;
@@ -77,9 +77,9 @@ appears. If `/healthz` stays 503, the project has no Postgres yet: the
 owner adds it from the app's page, or you ask with
 `python3 ~/tools/taskandtool.py request-capability postgres`.
 
-Look at your work before showing it: the board at
-`localhost:3000/b/<key>`, with `BOARD_USER=<email>` in the environment only
-if you run a second server by hand off the service.
+Look at your work before showing it: open the board at
+`localhost:3000/b/<key>`. Set `BOARD_USER=<email>` in the environment only
+if you run a second server by hand, outside the service.
 
 ## Before each deploy
 
@@ -98,16 +98,16 @@ dev and production share one database.
 
 ## Cost: no timer in dev
 
-An open board re-fetches itself after every edit made in its drawer, and
-nothing else in dev: a timer would hold the machine awake for as long as
-a tab is open. Production and a server off Task & Tool also refresh every
-30 seconds, because there it costs nothing. `BOARD_REFRESH_SECONDS`
-overrides either way (`0` is off).
+In dev, an open board re-fetches itself only after an edit made in its
+drawer: a timer would hold the machine awake for as long as a tab is open.
+Production and a server outside Task & Tool also refresh every 30 seconds,
+because there it costs nothing. `BOARD_REFRESH_SECONDS` overrides both
+(`0` is off).
 
 ## Who is signed in
 
-Dev and production both need a Task & Tool sign-in unless the owner made
-production public, and both carry the signed-in member's email as
+Dev and production both need a Task & Tool sign-in, unless the owner made
+production public. Both carry the signed-in member's email as
 `X-TaskTool-User`; that header is the board's whole notion of a user
 (assignee, "mine", who did what). It never gates an edit: whoever can open
 the board can change it, so a public production board is editable by anyone
