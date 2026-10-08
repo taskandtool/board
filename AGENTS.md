@@ -9,9 +9,9 @@ how to work on it in `.claude/skills/board/`, and `.taskandtool/setup.sh`
 for what the machine needs (dependencies, the `web` service). All of it is
 the owner's to change.
 
-The skill: `board` (the levers, the loop, the scripts) for "shape this
-board", "add a job", "what needs attention", "import my spreadsheet",
-"publish it". Read it before changing the board rather than working from
+For "shape this board", "add a job", "what needs attention", "import my
+spreadsheet", "publish it": the `board` skill (the levers, the loop, the
+scripts). Read it before changing the board rather than working from
 memory. The `data` skill holds the project database's rules; read it before
 adding a table or a migration.
 
@@ -20,11 +20,11 @@ adding a table or a migration.
 Each takes `--help` (or `-h`); `items.mjs` and `board.mjs` also take
 `--json`. A change prints `<script> <command>: <what happened, to which
 card>`, then `Next:` with the command to look at it. An error says what was
-wrong on stderr with a `Try:` line (exit 2 misused, 1 failed). With more
-than one board, `add`, `archive-done`, `import` and `export` need
-`--board`; without it, `list`, `find`, `attention` and `summary` cover
+wrong on stderr with a `Try:` line (exit 2 when misused, 1 when it failed).
+With more than one board, `add`, `archive-done`, `import` and `export` need
+`--board`. Without `--board`, `list`, `find`, `attention` and `summary` cover
 every board, and their `--json` is always `[{ "board": key, "result": ... }]`;
-with `--board`, it is the result itself.
+with `--board`, their `--json` is the result itself.
 
 ```bash
 node scripts/items.mjs add "title" [--board key] ...  # "items add: #12 Smith roof on Work, in To do"
@@ -72,7 +72,7 @@ npm run check                                          # "check: ok", or exit 1 
   and the server restarts on every change (a new migration included, which
   it applies), so an edit is in dev on refresh.
   If the service is not running, re-run `bash ~/app/.taskandtool/setup.sh`
-  (idempotent).
+  (it is safe to run again).
 - `npm run check` before showing work (config valid, migrations numbered,
   the refuse list, the typecheck). `npm test` for the tests.
 - `npm run deploy` publishes to production (migrate, build, deploy), after
