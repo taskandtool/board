@@ -15,8 +15,8 @@ carries meaning. `npm run check` enforces the parts that can be checked.
 | `--color-night` / `night-ink` / `night-ink-2` | The toast. |
 | `--color-ink` / `ink-2` / `ink-3` | Text, secondary text, metadata. Every pair meets 4.5:1 on canvas and panel. |
 | `--color-accent` / `accent-ink` | The one action colour: primary buttons, the focus ring. |
-| `--color-late` / `late-ink` | A card past its date. |
-| `--color-warn` / `warn-ink` | Due today or soon, urgent, a column over its limit. |
+| `--color-late` / `late-ink` | A card past its date (filled); an urgent card (outlined, `border-late text-late`). |
+| `--color-warn` / `warn-ink` | Due today or soon, a column over its limit. |
 | `--color-tag-0` to `tag-6` | The tag palette; `tag-0` is a tag the config does not name. All take `--color-ink`. |
 | `--color-line` / `line-strong` | Hairlines; input, button and table edges. `line-strong` keeps 3:1 on every ground, the floor for a control's edge. |
 
@@ -40,7 +40,8 @@ Controls (inputs, buttons, menu items) take their classes from
   and never widens the page.
 - A card shows its title and only the badges that carry information: a
   priority above normal, a due date, tags, a checklist count, the
-  assignee. Nothing decorative.
+  assignee. Nothing decorative. Dates are filled badges and priority is
+  outlined, so the two never read alike.
 - One accent colour does every primary action. Danger is not red; it is a
   plain button with a clear label and an Undo afterwards.
 - Motion: SortableJS's drag animation and nothing else. Reduced motion

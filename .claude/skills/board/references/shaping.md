@@ -22,6 +22,7 @@ that, and only when the column is empty.
   not exist yet.
 - `tags[]` is the palette: `{ "name": "Roof", "role": "tag-1" }` with roles
   `tag-1` to `tag-6`. Tags outside the palette take the neutral colour.
+  Priority is its own field: never a tag for it ("Urgent", "High").
 - `card.fields` is which built-in fields a card shows, from `due_on`,
   `assignee`, `priority`, `tags`, `checklist`, `customer_ref`.
 - `card.custom[]` adds fields without a migration:

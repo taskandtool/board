@@ -63,6 +63,8 @@ Everything a business wants changed is in one of these.
 `--help`). `--as <email>` records who acted; the default actor is `AI`.
 `--status` takes a column key or its label. Dates are `YYYY-MM-DD`. A
 spreadsheet to import: [references/import.md](references/import.md).
+A photo sent in chat goes onto a card with `items.mjs attach`; `show`
+lists a card's files and how to fetch one to look at.
 
 ## Dev, on this machine
 
@@ -112,3 +114,7 @@ production public. Both carry the signed-in member's email as
 (assignee, "mine", who did what). It never gates an edit: whoever can open
 the board can change it, so a public production board is editable by anyone
 with the link.
+
+A person's name on the board is `people.name`, which each person sets from
+their name at the top right; until then it is read from their email
+(`maria.lopez@` shows as Maria Lopez).

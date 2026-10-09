@@ -24,6 +24,8 @@ test("wrong input is refused before the database, with a Try line", () => {
     ["items", ["archive-done", "--older", "abc"], /--older abc is not a number of days/],
     ["items", ["add", "x", "--due", "tomorrow"], /--due tomorrow is not a date/],
     ["items", ["tag", "5"], /needs \+tag or -tag/],
+    ["items", ["attach", "5"], /needs a file/],
+    ["items", ["attach", "5", "no-such-file.jpg"], /no file at .*no-such-file\.jpg/],
   ];
   for (const [script, args, err] of cases) {
     const r = run(script, args, NOWHERE);

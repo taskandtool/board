@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanChecklist, cleanDate, cleanTags, cleanTitle, clampPriority, dueState, slugify } from "../src/db/queries";
+import { cleanChecklist, cleanDate, cleanFileName, cleanTags, cleanTitle, clampPriority, dueState, formatSize, slugify } from "../src/db/queries";
+import type { Activity } from "../src/db/queries";
+import { foldEdits } from "../src/views/item";
+import { initials, namer } from "../src/views/people";
 import { toCsv } from "../src/app";
 import { guessMap, parseCsv, parseDate, parsePriority } from "../scripts/csv";
 import { flag, flags, parseArgs } from "../src/data/cli.mjs";
@@ -84,4 +87,40 @@ test("the quiet refresh is a timer only where it is free", async () => {
   const { refreshTrigger } = await import("../src/views/board");
   assert.equal(refreshTrigger(0), "board-changed from:body");
   assert.match(refreshTrigger(30), /^every 30s \[.*visibilityState.*boardBusy.*\], board-changed from:body$/);
+});
+
+test("people show by the name they gave, else their email's first part as words", () => {
+  const nameOf = namer([{ email: "dev@x.com", name: "Dev Patel", last_seen_at: null, active: true }, { email: "sam@x.com", name: null, last_seen_at: null, active: true }]);
+  assert.equal(nameOf("dev@x.com"), "Dev Patel");
+  assert.equal(nameOf("sam@x.com"), "Sam");
+  assert.equal(nameOf("maria.lopez@x.com"), "Maria Lopez");
+  assert.equal(nameOf("AI"), "AI");
+  assert.equal(initials("Maria Lopez"), "ML");
+  assert.equal(initials("Sam"), "S");
+});
+
+test("the trail folds a run of one person's edits into one line, and nothing else", () => {
+  const at = (min: number) => new Date(Date.UTC(2026, 9, 8, 12, min));
+  const row = (id: number, who: string, kind: string, body: string | null, min: number): Activity => ({ id, item_id: 1, who, kind, body, from_status: null, to_status: null, at: at(min) });
+  const folded = foldEdits([
+    row(6, "a@x", "edited", "notes", 40),
+    row(5, "a@x", "edited", "title, notes", 33),
+    row(4, "a@x", "edited", "due_on", 25), // each within ten minutes of the next: one run
+    row(3, "b@x", "edited", "tags", 24),
+    row(2, "a@x", "comment", "hi", 23),
+    row(1, "a@x", "edited", "tags", 2), // twenty minutes earlier: its own line
+  ]);
+  assert.deepEqual(folded.map((a) => [a.id, a.body]), [[6, "notes, title, due_on"], [3, "tags"], [2, "hi"], [1, "tags"]]);
+});
+
+test("file names and sizes are cleaned for showing", () => {
+  assert.equal(cleanFileName("C:\\photos\\roof.jpg"), "roof.jpg");
+  assert.equal(cleanFileName("../../etc/passwd"), "passwd");
+  assert.equal(cleanFileName("a\u0000b.png"), "ab.png");
+  assert.equal(cleanFileName("   "), "file");
+  assert.ok(cleanFileName("x".repeat(300) + ".jpg").endsWith(".jpg"));
+  assert.equal(formatSize(45), "45 B");
+  assert.equal(formatSize(310_940), "304 KB");
+  assert.equal(formatSize(10 * 1024 * 1024), "10 MB");
+  assert.equal(formatSize(2_206_622), "2.1 MB");
 });

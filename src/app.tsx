@@ -2,6 +2,7 @@
 // a POST; nothing changes state on a GET. Responses to htmx requests are
 // partials; the same URLs answer a plain browser with a full page.
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import type { Context } from "hono";
 import { cfg } from "./config";
 import * as Q from "./db/queries";
@@ -11,6 +12,7 @@ import { ArchiveView, ColumnsView, WaitingView } from "./views/columns";
 import { ItemView } from "./views/item";
 import { Layout, type Shell } from "./views/layout";
 import { ListView, sortItems, type Sort } from "./views/list";
+import { namer } from "./views/people";
 import type { AppEnv, Runtime } from "./runtime";
 
 type C = Context<AppEnv>;
@@ -80,7 +82,9 @@ const num = (v: unknown) => (typeof v === "string" && /^\d+$/.test(v) ? Number(v
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 
 async function shell(c: C, board: Board | null, view: Shell["view"]): Promise<Shell> {
-  return { boards: await Q.boards(c.var.db), board, view, user: c.get("user") };
+  const user = c.get("user");
+  const [boards, people] = await Promise.all([Q.boards(c.var.db), user ? Q.people(c.var.db) : []]);
+  return { boards, board, view, user, userName: user ? namer(people)(user) : "" };
 }
 
 async function boardOr404(c: C): Promise<Board | null> {
@@ -104,7 +108,7 @@ async function boardData(c: C, board: Board, filters = filtersFrom(c)): Promise<
   const [columns, items, counts, people, samples] = await Promise.all([
     Q.statuses(pool, board.id), Q.items(pool, board.id, filters), Q.columnCounts(pool, board.id), Q.people(pool), Q.sampleCount(pool, board.id),
   ]);
-  return { board, columns, items, counts, filters, people, samples, user: c.get("user"), refreshSeconds: c.env.runtime.refreshSeconds };
+  return { board, columns, items, counts, filters, people, nameOf: namer(people), samples, user: c.get("user"), refreshSeconds: c.env.runtime.refreshSeconds };
 }
 
 // Every mutation from the board answers with the board partial, and a toast
@@ -260,6 +264,16 @@ app.post("/columns/:id/archive", async (c) => {
   return c.redirect(`/b/${found.board.key}/columns`, 303);
 });
 
+// The signed-in person names themselves; an empty name goes back to the one
+// read from their email.
+app.post("/me", async (c) => {
+  const user = c.get("user");
+  if (!user) return c.text("Nobody is signed in", 400);
+  await Q.setName(c.var.db, user, str((await c.req.parseBody()).name).replace(/\s+/g, " ").trim().slice(0, 60) || null);
+  const back = new URL(c.req.header("referer") ?? "/", "http://x");
+  return c.redirect(localPath(back.pathname + back.search, "/"), 303);
+});
+
 // ---- items ----------------------------------------------------------------
 
 app.post("/b/:board/items", async (c) => {
@@ -298,12 +312,9 @@ app.get("/b/:board/archive", async (c) => {
 
 async function itemView(c: C, item: Item, status = 200) {
   const pool = c.var.db;
-  const [board, columns, activity, people] = await Promise.all([Q.boardById(pool, item.board_id), Q.statuses(pool, item.board_id, true), Q.activity(pool, item.id), Q.people(pool)]);
-  const data = { item, board: board!, columns: columns.filter((s) => !s.archived_at || s.id === item.status_id), activity, people, user: c.get("user"), drawer: isHx(c) };
-  if (isHx(c)) {
-    if (c.req.method !== "GET") c.header("HX-Trigger", "board-changed");
-    return c.html(<ItemView data={data} />, status as 200);
-  }
+  const [board, columns, activity, people, files] = await Promise.all([Q.boardById(pool, item.board_id), Q.statuses(pool, item.board_id, true), Q.activity(pool, item.id), Q.people(pool), Q.files(pool, item.id)]);
+  const data = { item, board: board!, columns: columns.filter((s) => !s.archived_at || s.id === item.status_id), activity, people, nameOf: namer(people), files, user: c.get("user"), drawer: isHx(c) };
+  if (isHx(c)) return c.html(<ItemView data={data} />, status as 200);
   return c.html(<Layout title={item.title} shell={await shell(c, data.board, "item")}><ItemView data={data} /></Layout>, status as 200);
 }
 
@@ -411,6 +422,58 @@ app.post("/items/:id/restore", async (c) => {
   if (!isHx(c)) return c.redirect(localPath(ret, `/b/${board.key}`), 303);
   if (c.req.header("hx-target") === "board") return boardResponse(c, board, { message: `Restored "${item.title}"` });
   return itemView(c, (await Q.item(c.var.db, item.id))!);
+});
+
+// ---- files ----------------------------------------------------------------
+
+// Files onto a card, from the drawer's upload form. A photo comes with its
+// preview as a `thumb` part named for the photo's place in the list.
+app.post(
+  "/items/:id/files",
+  bodyLimit({ maxSize: Q.MAX_UPLOAD_BYTES, onError: (c) => c.text(`That is more than ${Q.formatSize(Q.MAX_UPLOAD_BYTES)} at once; add fewer files at a time.`, 413) }),
+  async (c) => {
+    const item = await itemOr404(c);
+    if (!item) return c.notFound();
+    const body = await c.req.parseBody({ all: true });
+    const parts = (v: unknown) => (Array.isArray(v) ? v : [v]).filter((f): f is File => typeof f === "object" && f !== null);
+    const thumbs = parts(body.thumb);
+    const bytes = async (f: File) => new Uint8Array(await f.arrayBuffer());
+    const list = await Promise.all(parts(body.file).map(async (f, i) => {
+      const thumb = thumbs.find((t) => t.name === String(i));
+      return { name: f.name, content_type: f.type, bytes: await bytes(f), thumb: thumb ? await bytes(thumb) : null };
+    }));
+    try {
+      await Q.addFiles(c.var.db, item.id, list.filter((f) => f.bytes.length), c.get("user"));
+    } catch (e) {
+      return c.text(e instanceof Error ? e.message : "Could not add the files", 400);
+    }
+    return itemView(c, item);
+  },
+);
+
+// A file, served so it can never act as a page of the board: only photos
+// show in place, everything else downloads, and nothing may run scripts.
+// A file never changes under its id, so the browser keeps it.
+app.get("/files/:id", async (c) => {
+  const id = num(c.req.param("id"));
+  const file = Number.isFinite(id) ? await Q.fileData(c.var.db, id, c.req.query("thumb") === "1") : null;
+  if (!file) return c.notFound();
+  const photo = Q.PHOTO_TYPES.includes(file.content_type);
+  return c.body(file.bytes, 200, {
+    "Content-Type": photo ? file.content_type : "application/octet-stream",
+    "Content-Disposition": `${photo ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+    "Cache-Control": "private, max-age=31536000, immutable",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox",
+  });
+});
+
+app.post("/files/:id/remove", async (c) => {
+  const id = num(c.req.param("id"));
+  const itemId = Number.isFinite(id) ? await Q.removeFile(c.var.db, id, c.get("user")) : null;
+  const item = itemId ? await Q.item(c.var.db, itemId) : null;
+  if (!item) return c.notFound();
+  return itemView(c, item);
 });
 
 app.notFound((c) => c.text("Not found", 404));

@@ -1,14 +1,19 @@
 // The list: the same items as a table, sorted and grouped, with a CSV export.
 import { showsField, tagRole } from "../config";
 import type { Item, Status } from "../db/queries";
-import { dueState, PRIORITIES } from "../db/queries";
-import { type BoardData, DueBadge, FilterBar, shortName } from "./board";
+import { dueState } from "../db/queries";
+import { type BoardData, DueBadge, FilterBar, PriorityBadge } from "./board";
+import type { NameOf } from "./people";
 import { vocab } from "./layout";
 
 export type Sort = "due_on" | "priority" | "updated_at" | "title" | "created_at";
 const SORTS: { key: Sort; label: string }[] = [
   { key: "due_on", label: "Due" }, { key: "priority", label: "Priority" }, { key: "updated_at", label: "Updated" }, { key: "created_at", label: "Age" }, { key: "title", label: "Title" },
 ];
+
+// On a phone the table is the title and the date; the rest rides under the
+// title. These columns show from the sm breakpoint up.
+const wide = "hidden sm:table-cell";
 
 export function sortItems(items: Item[], sort: Sort): Item[] {
   const by: Record<Sort, (a: Item, b: Item) => number> = {
@@ -47,19 +52,19 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
         <thead>
           <tr class="border-b border-line-strong text-left text-label text-ink-3">
             <th class="py-1 pr-3">{vocab.one}</th>
-            <th class="py-1 pr-3">Column</th>
-            {showsField("assignee") ? <th class="py-1 pr-3">Assignee</th> : null}
+            <th class={wide + " py-1 pr-3"}>Column</th>
+            {showsField("assignee") ? <th class={wide + " py-1 pr-3"}>Assignee</th> : null}
             {showsField("due_on") ? <th class="py-1 pr-3">Due</th> : null}
-            {showsField("priority") ? <th class="py-1 pr-3">Priority</th> : null}
-            {showsField("tags") ? <th class="py-1 pr-3">Tags</th> : null}
-            <th class="py-1">Updated</th>
+            {showsField("priority") ? <th class={wide + " py-1 pr-3"}>Priority</th> : null}
+            {showsField("tags") ? <th class={wide + " py-1 pr-3"}>Tags</th> : null}
+            <th class={wide + " py-1"}>Updated</th>
           </tr>
         </thead>
         <tbody>
           {groups.map((g) => (
             <>
               {g.label ? <tr><th colspan={7} class="bg-panel px-2 py-1 text-left text-label">{g.label} <span class="text-ink-3">{g.items.length}</span></th></tr> : null}
-              {g.items.map((it) => <Row item={it} columns={columns} />)}
+              {g.items.map((it) => <Row item={it} columns={columns} nameOf={data.nameOf} />)}
             </>
           ))}
           {items.length === 0 ? <tr><td colspan={7} class="py-6 text-center text-ink-3">Nothing here yet</td></tr> : null}
@@ -70,17 +75,23 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
   );
 }
 
-function Row({ item, columns }: { item: Item; columns: Status[] }) {
+function Row({ item, columns, nameOf }: { item: Item; columns: Status[]; nameOf: NameOf }) {
   const col = columns.find((c) => c.id === item.status_id);
   return (
     <tr class="border-b border-line align-top hover:bg-surface">
-      <td class="py-1 pr-3"><a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="no-underline hover:underline">{item.title}</a></td>
-      <td class="py-1 pr-3 text-ink-2">{col?.label}</td>
-      {showsField("assignee") ? <td class="py-1 pr-3 text-ink-2" title={item.assignee ?? ""}>{item.assignee ? shortName(item.assignee) : ""}</td> : null}
+      <td class="py-1 pr-3">
+        <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="no-underline hover:underline">{item.title}</a>
+        <div class="flex flex-wrap items-center gap-x-1.5 text-label text-ink-3 sm:hidden">
+          {[col?.label, showsField("assignee") && item.assignee ? nameOf(item.assignee) : ""].filter(Boolean).join(" · ")}
+          {showsField("priority") ? <PriorityBadge priority={item.priority} /> : null}
+        </div>
+      </td>
+      <td class={wide + " py-1 pr-3 text-ink-2"}>{col?.label}</td>
+      {showsField("assignee") ? <td class={wide + " py-1 pr-3 text-ink-2"} title={item.assignee ?? ""}>{item.assignee ? nameOf(item.assignee) : ""}</td> : null}
       {showsField("due_on") ? <td class="py-1 pr-3">{item.due_on ? <DueBadge due={item.due_on} state={dueState(item.due_on, item.completed_at)} /> : null}</td> : null}
-      {showsField("priority") ? <td class="py-1 pr-3 text-ink-2">{item.priority ? PRIORITIES[item.priority] : ""}</td> : null}
-      {showsField("tags") ? <td class="py-1 pr-3"><span class="flex flex-wrap gap-1 text-label">{item.tags.map((t) => <span class={`rounded-control px-1 bg-${tagRole(t)}`}>{t}</span>)}</span></td> : null}
-      <td class="py-1 text-label text-ink-3" title={new Date(item.updated_at).toISOString()}>{ago(item.updated_at)}</td>
+      {showsField("priority") ? <td class={wide + " py-1 pr-3 text-label"}><PriorityBadge priority={item.priority} /></td> : null}
+      {showsField("tags") ? <td class={wide + " py-1 pr-3"}><span class="flex flex-wrap gap-1 text-label">{item.tags.map((t) => <span class={`rounded-control px-1 bg-${tagRole(t)}`}>{t}</span>)}</span></td> : null}
+      <td class={wide + " py-1 text-label text-ink-3"} title={new Date(item.updated_at).toISOString()}>{ago(item.updated_at)}</td>
     </tr>
   );
 }

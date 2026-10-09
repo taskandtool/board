@@ -18,7 +18,12 @@ runs anywhere with Node 20 and a Postgres.
   limit on how many cards a column should hold at once (shown, never
   enforced) and a flag for the columns that count as finished.
 - **Cards** with a title, notes, a due date, an assignee, a priority, tags,
-  a checklist, comments, and custom fields declared in the config.
+  a checklist, comments, and custom fields declared in the config. A card
+  saves each field as you leave it.
+- **Photos and files** on a card: picked, dropped or pasted. Photos are made
+  smaller in the browser before they upload, the first one is the card's
+  cover, and they open in a viewer; other files download. They are kept in
+  the board's own database, so a backup of it holds them too.
 - **Drag** between and within columns, or move with the keyboard and the
   card menu. Every move can be undone from the toast.
 - **Filter** by search, assignee, tag or due date, or just "mine".

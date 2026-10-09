@@ -21,6 +21,10 @@ export type Item = {
   fields: Record<string, string>; customer_ref: string | null; is_sample: boolean; created_by: string | null;
   created_at: Date; updated_at: Date; completed_at: Date | null; archived_at: Date | null;
 };
+// A card on the board: the row and what its files add to it (how many, and
+// the first photo with a preview, or small enough to need none: its cover).
+export type BoardItem = Item & { file_count: number; cover_id: number | null };
+export type ItemFile = { id: number; item_id: number; name: string; content_type: string; size: number; created_by: string | null; created_at: Date };
 export type Activity = {
   id: number; item_id: number; who: string | null; kind: string; body: string | null;
   from_status: string | null; to_status: string | null; at: Date;
@@ -174,10 +178,12 @@ function where(filters: Filters, params: unknown[]): string {
   return parts.length ? " and " + parts.join(" and ") : "";
 }
 
-export async function items(q: Q, boardId: number, filters: Filters = {}): Promise<Item[]> {
-  const params: unknown[] = [boardId];
-  const sql = `select i.* from items i join statuses s on s.id = i.status_id where i.board_id = $1 and i.archived_at is null${where(filters, params)} ${ITEM_ORDER}`;
-  return (await q.query<Item>(sql, params)).rows;
+export async function items(q: Q, boardId: number, filters: Filters = {}): Promise<BoardItem[]> {
+  const params: unknown[] = [boardId, PHOTO_TYPES, MAX_THUMB_BYTES];
+  const sql = `select i.*, f.file_count, f.cover_id from items i join statuses s on s.id = i.status_id
+    left join lateral (select count(*)::int as file_count, min(id) filter (where content_type = any($2) and (thumb is not null or size <= $3)) as cover_id from item_files where item_id = i.id) f on true
+    where i.board_id = $1 and i.archived_at is null${where(filters, params)} ${ITEM_ORDER}`;
+  return (await q.query<BoardItem>(sql, params)).rows;
 }
 
 export async function archivedItems(q: Q, boardId: number): Promise<Item[]> {
@@ -257,11 +263,11 @@ export async function updateItem(q: Q, id: number, patch: ItemPatch, who: string
   };
   const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => JSON.stringify(next[k]) !== JSON.stringify(cur[k]));
   if (!changed.length) return cur;
-  const updated = (await q.query<Item>(
-    `update items set title = $2, notes = $3, assignee = $4, due_on = $5, priority = $6, tags = $7, fields = $8, customer_ref = $9, checklist = $10, updated_at = now(), is_sample = false
-     where id = $1 returning *`,
-    [id, next.title, next.notes, next.assignee, next.due_on, next.priority, next.tags, next.fields, next.customer_ref, JSON.stringify(next.checklist)],
-  )).rows[0];
+  // Only the changed columns are written, so two saves at once (a note and a
+  // checklist tick) never put back each other's old values.
+  const sets = changed.map((k, i) => `${k} = $${i + 2}`).join(", ");
+  const values = changed.map((k) => (k === "checklist" ? JSON.stringify(next[k]) : next[k]));
+  const updated = (await q.query<Item>(`update items set ${sets}, updated_at = now(), is_sample = false where id = $1 returning *`, [id, ...values])).rows[0];
   await log(q, id, who, "edited", changed.join(", "));
   return updated;
 }
@@ -389,10 +395,73 @@ export async function sampleCount(q: Q, boardId: number): Promise<number> {
   return Number((await q.query<{ n: string }>("select count(*)::text as n from items where board_id = $1 and is_sample and archived_at is null", [boardId])).rows[0].n);
 }
 
+// ---- files ----------------------------------------------------------------
+
+// The types a browser shows in place; every other file is only downloaded.
+export const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+export const MAX_FILE_BYTES = 10 * 1024 * 1024;
+// One upload is held in memory a few times over while it is stored, and a
+// Worker in production has 128 MB.
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const MAX_THUMB_BYTES = 512 * 1024;
+
+export type NewFile = { name: string; content_type: string; bytes: Uint8Array; thumb?: Uint8Array | null };
+
+export function cleanFileName(name: string): string {
+  return name.split(/[\\/]/).pop()!.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(-200) || "file";
+}
+
+export async function files(q: Q, itemId: number): Promise<ItemFile[]> {
+  return (await q.query<ItemFile>("select id, item_id, name, content_type, size, created_by, created_at from item_files where item_id = $1 order by id", [itemId])).rows;
+}
+
+// A file's bytes, or its preview (a JPEG) when asked and there is one.
+export async function fileData(q: Q, id: number, thumb: boolean): Promise<{ name: string; content_type: string; bytes: Uint8Array<ArrayBuffer> } | null> {
+  return (await q.query(
+    `select name, case when $2 and thumb is not null then 'image/jpeg' else content_type end as content_type,
+       case when $2 then coalesce(thumb, bytes) else bytes end as bytes
+     from item_files where id = $1`,
+    [id, thumb],
+  )).rows[0] ?? null;
+}
+
+// Files onto a card, all or none: one too large refuses the lot, naming it.
+// A preview that is not a small image is dropped; the card shows the file.
+export async function addFiles(q: Q, itemId: number, list: NewFile[], who: string | null): Promise<ItemFile[]> {
+  if (!list.length) throw new Error("no file came with that");
+  const big = list.find((f) => f.bytes.length > MAX_FILE_BYTES);
+  if (big) throw new Error(`${cleanFileName(big.name)} is ${formatSize(big.bytes.length)}; a file can be ${formatSize(MAX_FILE_BYTES)} at most`);
+  const added: ItemFile[] = [];
+  for (const f of list) {
+    const type = /^[\w.+-]+\/[\w.+-]+$/.test(f.content_type) ? f.content_type.toLowerCase() : "application/octet-stream";
+    const thumb = f.thumb && f.thumb.length <= MAX_THUMB_BYTES ? f.thumb : null;
+    added.push((await q.query<ItemFile>(
+      "insert into item_files (item_id, name, content_type, size, bytes, thumb, created_by) values ($1, $2, $3, $4, $5, $6, $7) returning id, item_id, name, content_type, size, created_by, created_at",
+      [itemId, cleanFileName(f.name), type, f.bytes.length, f.bytes, thumb, who],
+    )).rows[0]);
+  }
+  await log(q, itemId, who, "attached", added.map((f) => f.name).join(", "));
+  await q.query("update items set updated_at = now() where id = $1", [itemId]);
+  return added;
+}
+
+// Removes a file; returns the card it was on, or null when there was none.
+export async function removeFile(q: Q, id: number, who: string | null): Promise<number | null> {
+  const gone = (await q.query<{ item_id: number; name: string }>("delete from item_files where id = $1 returning item_id, name", [id])).rows[0];
+  if (!gone) return null;
+  await log(q, gone.item_id, who, "detached", gone.name);
+  await q.query("update items set updated_at = now() where id = $1", [gone.item_id]);
+  return gone.item_id;
+}
+
 // ---- people ---------------------------------------------------------------
 
 export async function people(q: Q): Promise<Person[]> {
   return (await q.query<Person>("select * from people where active order by email")).rows;
+}
+
+export async function setName(q: Q, email: string, name: string | null): Promise<void> {
+  await q.query("insert into people (email, name, last_seen_at) values ($1, $2, now()) on conflict (email) do update set name = $2", [email.toLowerCase(), name]);
 }
 
 export async function touchPerson(q: Q, email: string): Promise<void> {
@@ -460,6 +529,12 @@ export async function summary(q: Q, boardId: number): Promise<Summary> {
 }
 
 // ---- helpers shared by views and scripts ----------------------------------
+
+export function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
+}
 
 export type DueState = "overdue" | "today" | "soon" | "later" | "none";
 

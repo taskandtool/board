@@ -30,6 +30,7 @@ with `--board`, their `--json` is the result itself.
 node scripts/items.mjs add "title" [--board key] ...  # "items add: #12 Smith roof on Work, in To do"
 node scripts/items.mjs move <id> <column>             # "items move: #12 Smith roof, To do → Doing"
 node scripts/items.mjs note <id> "text"               # a comment on the card
+node scripts/items.mjs attach <id> <file>...          # "items attach: 2 files onto #12 Smith roof", each named with its size
 node scripts/items.mjs attention                       # what needs attention and why, every board
 node scripts/items.mjs list [--status key] [--tag t]   # cards, grouped by board when there are several
 node scripts/items.mjs find "words"                    # cards matching the words, same grouping
@@ -83,7 +84,7 @@ npm run check                                          # "check: ok", or exit 1 
 ## Rules
 
 - The customer's words for things live in `board.config.json`; the tables
-  stay `boards`, `statuses`, `items`, `activity`, `people`. A new field is
+  stay `boards`, `statuses`, `items`, `item_files`, `activity`, `people`. A new field is
   a new numbered migration, never an edit to an old one; the rest of the
   table rules are the `data` skill's.
 - Identity comes from the platform. Task & Tool sets `X-TaskTool-User` from

@@ -1,4 +1,6 @@
 // The AI's hands on the board. `node scripts/items.mjs --help`.
+import { existsSync, readFileSync } from "node:fs";
+import { basename, extname, resolve } from "node:path";
 import { flag, flags, has, usage, misused, fail, out, localTime } from "../src/data/cli.mjs";
 import { args, withDb, who, resolveBoard, boardsFor, resolveStatus, fmtItem, report, at, rerunWith } from "./lib";
 import * as Q from "../src/db/queries";
@@ -15,6 +17,7 @@ const HELP = `items.mjs: read and change the board's cards from the command line
   tag <id> +tag -tag ...
   note <id> "text"                   a comment on the card
   check <id> "step" [--done]         add a checklist step (or mark one done by its text)
+  attach <id> <file>...              photos or files onto the card, ${Q.formatSize(Q.MAX_FILE_BYTES)} each at most
   find "words" [--board key]
   archive <id> | restore <id>
   archive-done [--board key] [--older 14]
@@ -42,6 +45,7 @@ const ALLOWED: Record<string, string[]> = {
   tag: ["as"],
   note: ["as"],
   check: ["done", "as"],
+  attach: ["as"],
   find: ["board"],
   archive: ["as"],
   restore: ["as"],
@@ -50,7 +54,7 @@ const ALLOWED: Record<string, string[]> = {
   summary: ["board"],
 };
 // Commands that name a card by its id, first.
-const BY_ID = ["show", "move", "edit", "tag", "note", "check", "archive", "restore"];
+const BY_ID = ["show", "move", "edit", "tag", "note", "check", "attach", "archive", "restore"];
 const PRIORITY_NAMES = Q.PRIORITIES.map((p) => p.toLowerCase());
 
 const a = args(["overdue", "over-limit", "archived", "top", "to-top", "done"]);
@@ -115,10 +119,22 @@ const needs: Record<string, [boolean, string, string]> = {
   tag: [rest.length > 1, "+tag or -tag", `tag ${id} +urgent -waiting`],
   note: [!!text, "text", `note ${id} "Customer confirmed the date"`],
   check: [!!text, "a step", `check ${id} "Order parts"`],
+  attach: [rest.length > 1, "a file", `attach ${id} ~/app/uploads/roof.jpg`],
   find: [!!rest.join(" ").trim(), "words", `find "roof"`],
 };
 const need = needs[cmd];
 if (need && !need[0]) misused(`${at}: needs ${need[1]}`, `node scripts/items.mjs ${need[2]}`);
+
+// attach's files, read before the database: a path that is not there is a
+// misuse, and a file over the limit is refused.
+const TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".pdf": "application/pdf", ".csv": "text/csv", ".txt": "text/plain" };
+const attaching: Q.NewFile[] = cmd === "attach" ? rest.slice(1).map((p) => {
+  const path = resolve(process.env.CALLER_CWD ?? ".", p);
+  if (!existsSync(path)) misused(`${at}: no file at ${path}`, `ls ${resolve(path, "..")}`);
+  const bytes = readFileSync(path);
+  if (bytes.length > Q.MAX_FILE_BYTES) fail(`${at}: ${basename(path)} is ${Q.formatSize(bytes.length)}; a file can be ${Q.formatSize(Q.MAX_FILE_BYTES)} at most`, `node scripts/items.mjs note ${id} "<where the file is kept>"`);
+  return { name: basename(path), content_type: TYPES[extname(path).toLowerCase()] ?? "application/octet-stream", bytes };
+}) : [];
 
 await withDb(async (pool) => {
   // The card the id names and the columns of its own board, or exit 2 naming the id.
@@ -174,7 +190,9 @@ await withDb(async (pool) => {
     case "show": {
       const { it, cols } = await card();
       const acts = await Q.activity(pool, it.id);
-      out(json, { item: it, activity: acts }, () => [fmtItem(it, cols), it.notes ? "\n" + it.notes : "", it.checklist.length ? "\nchecklist:\n" + it.checklist.map((c) => `  [${c.done ? "x" : " "}] ${c.text}`).join("\n") : "",
+      const files = await Q.files(pool, it.id);
+      out(json, { item: it, files, activity: acts }, () => [fmtItem(it, cols), it.notes ? "\n" + it.notes : "", it.checklist.length ? "\nchecklist:\n" + it.checklist.map((c) => `  [${c.done ? "x" : " "}] ${c.text}`).join("\n") : "",
+        files.length ? "\nfiles (curl -s localhost:3000/files/<id> -o <name> to look at one):\n" + files.map((f) => `  ${f.id} ${f.name}, ${Q.formatSize(f.size)}`).join("\n") : "",
         Object.keys(it.fields).length ? "\nfields: " + Object.entries(it.fields).map(([k, v]) => `${k}=${v}`).join(", ") : "",
         `\nactivity (${cfg.time_zone}):\n` + (acts.length ? "" : "  none") + acts.map((x) => `  ${localTime(x.at, cfg.time_zone)} ${x.who ?? "Someone"} ${x.kind}${x.body ? ": " + x.body : ""}${x.from_status ? ` ${x.from_status} -> ${x.to_status}` : ""}`).join("\n")].join(""));
       break;
@@ -232,6 +250,18 @@ await withDb(async (pool) => {
       const u = same ? it : await Q.updateItem(pool, it.id, { checklist: list }, actor);
       const state = `${u.checklist.filter((c) => c.done).length} of ${u.checklist.length} done`;
       report(json, u.checklist, same ? `${name(u)}: "${list[i].text}" is already on the checklist${list[i].done ? ", done" : ""}, left alone` : `${name(u)}: checklist, ${state}`, { lines: u.checklist.map((c) => `[${c.done ? "x" : " "}] ${c.text}`), next: show });
+      break;
+    }
+    case "attach": {
+      const { it } = await card();
+      // Safe twice: a file of the same name and size already on the card is left alone.
+      const there = await Q.files(pool, it.id);
+      const same = (f: Q.NewFile) => there.some((x) => x.name === Q.cleanFileName(f.name) && x.size === f.bytes.length);
+      const fresh = attaching.filter((f) => !same(f));
+      const kept = attaching.filter(same).map((f) => `left alone: ${f.name} is already on the card`);
+      if (!fresh.length) { report(json, [], `${name(it)}: every file is already on it, left alone`, { lines: kept, next: show }); break; }
+      const added = await Q.addFiles(pool, it.id, fresh, actor);
+      report(json, added, `${added.length} file${added.length === 1 ? "" : "s"} onto ${name(it)}`, { lines: [...added.map((f) => `${f.name}, ${Q.formatSize(f.size)}`), ...kept], next: show });
       break;
     }
     case "find": {

@@ -58,6 +58,7 @@ if (!url) {
     // the migration file itself is re-runnable outside the ledger
     const { readFileSync } = await import("node:fs");
     await pool.query(readFileSync("migrations/0001_schema.sql", "utf8"));
+    await pool.query(readFileSync("migrations/0002_item_files.sql", "utf8"));
   });
 
   test("a move renumbers both columns, keeps completed_at honest, and can be undone", async (t) => {
@@ -178,6 +179,47 @@ if (!url) {
     await Q.createStatus(pool, b.id, "Paid", { is_done: true });
     await Q.createStatus(pool, b.id, "Review");
     assert.deepEqual((await Q.statuses(pool, b.id)).map((c) => c.key), [...cols.slice(0, -1).map((c) => c.key), "review", "done", "paid"]);
+  });
+
+  test("two saves at once each keep their own change", async (t) => {
+    if (!(await scratch(t))) return;
+    const [board] = await Q.boards(pool);
+    const it = await Q.createItem(pool, board.id, { title: "two saves" }, "t@x");
+    await Promise.all([
+      Q.updateItem(pool, it.id, { notes: "typed in the drawer" }, "t@x"),
+      Q.updateItem(pool, it.id, { checklist: [{ text: "ticked", done: true }] }, "t@x"),
+    ]);
+    const after = (await Q.item(pool, it.id))!;
+    assert.equal(after.notes, "typed in the drawer");
+    assert.deepEqual(after.checklist, [{ text: "ticked", done: true }]);
+  });
+
+  test("files: the first photo is the cover, previews fall back to the file, too large refuses all, removal is recorded", async (t) => {
+    if (!(await scratch(t))) return;
+    const [board] = await Q.boards(pool);
+    const it = await Q.createItem(pool, board.id, { title: "with files" }, "t@x");
+    const bytes = (n: number, v = 1) => new Uint8Array(n).fill(v);
+    await assert.rejects(Q.addFiles(pool, it.id, [{ name: "a.jpg", content_type: "image/jpeg", bytes: bytes(10) }, { name: "big.bin", content_type: "x/y", bytes: bytes(Q.MAX_FILE_BYTES + 1) }], "t@x"), /big\.bin is 10 MB; a file can be 10 MB at most/);
+    assert.equal((await Q.files(pool, it.id)).length, 0, "nothing from a refused upload");
+    const [pdf, photo, png] = await Q.addFiles(pool, it.id, [
+      { name: "permit.pdf", content_type: "application/pdf", bytes: bytes(5) },
+      { name: "../roof.jpg", content_type: "image/jpeg", bytes: bytes(20, 2), thumb: bytes(3, 3) },
+      { name: "plan.png", content_type: "<script>", bytes: bytes(4) },
+    ], "t@x");
+    assert.equal(photo.name, "roof.jpg");
+    assert.equal(png.content_type, "application/octet-stream", "a type that is not one is not kept");
+    const card = (await Q.items(pool, board.id)).find((i) => i.id === it.id)!;
+    assert.equal(card.file_count, 3);
+    assert.equal(card.cover_id, photo.id);
+    assert.deepEqual([...(await Q.fileData(pool, photo.id, true))!.bytes], [3, 3, 3]);
+    assert.equal((await Q.fileData(pool, photo.id, true))!.content_type, "image/jpeg");
+    assert.equal((await Q.fileData(pool, pdf.id, true))!.bytes.length, 5, "no preview: the file itself");
+    assert.equal(await Q.removeFile(pool, photo.id, "t@x"), it.id);
+    assert.equal(await Q.removeFile(pool, photo.id, "t@x"), null);
+    assert.equal((await Q.items(pool, board.id)).find((i) => i.id === it.id)!.cover_id, null);
+    await Q.addFiles(pool, it.id, [{ name: "phone.jpg", content_type: "image/jpeg", bytes: bytes(600 * 1024) }], "t@x");
+    assert.equal((await Q.items(pool, board.id)).find((i) => i.id === it.id)!.cover_id, null, "a large photo with no preview is never a cover");
+    assert.deepEqual((await Q.activity(pool, it.id)).slice(0, 3).map((a) => [a.kind, a.body]), [["attached", "phone.jpg"], ["detached", "roof.jpg"], ["attached", "permit.pdf, roof.jpg, plan.png"]]);
   });
 }
 
