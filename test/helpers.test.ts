@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { cleanChecklist, cleanDate, cleanFileName, cleanTags, cleanTitle, clampPriority, dueState, formatSize, slugify } from "../src/db/queries";
 import type { Activity } from "../src/db/queries";
 import { foldEdits } from "../src/views/item";
@@ -8,6 +9,7 @@ import { toCsv } from "../src/app";
 import { guessMap, parseCsv, parseDate, parsePriority } from "../scripts/csv";
 import { flag, flags, parseArgs } from "../src/data/cli.mjs";
 import { sortItems } from "../src/views/list";
+import { readXlsx } from "../scripts/xlsx";
 
 test("titles, tags, dates and priorities are cleaned, never trusted", () => {
   assert.equal(cleanTitle("  a   b\n c "), "a b c");
@@ -87,6 +89,11 @@ test("the quiet refresh is a timer only where it is free", async () => {
   const { refreshTrigger } = await import("../src/views/board");
   assert.equal(refreshTrigger(0), "board-changed from:body");
   assert.match(refreshTrigger(30), /^every 30s \[.*visibilityState.*boardBusy.*\], board-changed from:body$/);
+});
+
+test("xlsx: the first sheet as rows, the same as the CSV it was made from", () => {
+  assert.deepEqual(readXlsx(readFileSync("test/fixtures/jobs.xlsx")), parseCsv(readFileSync("test/fixtures/jobs.csv", "utf8")));
+  assert.throws(() => readXlsx(Buffer.from("Task,Status\n")), /not an .xlsx/);
 });
 
 test("people show by the name they gave, else their email's first part as words", () => {

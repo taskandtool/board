@@ -1,19 +1,21 @@
-// CSV in: the spreadsheet the business runs on today becomes cards.
+// CSV or .xlsx in: the spreadsheet the business runs on today becomes cards.
 // `node scripts/import.mjs file.csv --dry-run` first, always.
 import { readFileSync } from "node:fs";
 import type pg from "pg";
 import { resolve } from "node:path";
-import { flag, flags, has, misused, done } from "../src/data/cli.mjs";
+import { flag, flags, has, misused, done, fail } from "../src/data/cli.mjs";
 import { args, plain, withDb, who, resolveBoard, resolveStatus, rerunWith } from "./lib";
 import { cfg } from "../src/config";
 import { guessMap, parseCsv, parseDate, parsePriority } from "./csv";
+import { readXlsx } from "./xlsx";
 import * as Q from "../src/db/queries";
 
-const HELP = `import.mjs <file.csv> [--board key] [--map title=Task,due_on=Due,...] [--status key] [--dry-run]
+const HELP = `import.mjs <file.csv|file.xlsx> [--board key] [--map title=Task,due_on=Due,...] [--status key] [--dry-run]
 
-Reads a CSV with a header row. Columns are matched to card fields by name
-(title, status, assignee, due_on, priority, tags, notes, customer_ref, and
-any custom field key from board.config.json); --map overrides a match as
+Reads a CSV, or the first sheet of an .xlsx, with a header row. Columns
+are matched to card fields by name (title, status, assignee, due_on,
+priority, tags, notes, customer_ref, and any custom field key from
+board.config.json); --map overrides a match as
 field=Header. A status value that names no column falls back to --status
 (default: the first column). A relative path is read from where you ran it.
 
@@ -29,14 +31,19 @@ if (a._.length !== 1) misused(`import: ${a._.length ? `takes one CSV file, got $
 const [file] = a._;
 
 const path = resolve(process.env.CALLER_CWD ?? ".", file);
-let text: string;
+let bytes!: Buffer;
 try {
-  text = readFileSync(path, "utf8");
+  bytes = readFileSync(path);
 } catch (e) {
   const err = e as NodeJS.ErrnoException;
   misused(`import: cannot read ${path}: ${err.code === "ENOENT" ? "no such file" : err.code === "EISDIR" ? "it is a folder" : err.message}`, `ls ${resolve(path, "..")}`);
 }
-const rows = parseCsv(text);
+let rows: string[][] = [];
+try {
+  rows = /\.xlsx$/i.test(file) ? readXlsx(bytes) : parseCsv(bytes.toString("utf8"));
+} catch (e) {
+  fail(`import: ${file}: ${(e as Error).message}; save it from the spreadsheet as CSV and import that`, `node scripts/import.mjs ${file.replace(/\.xlsx$/i, ".csv")} --dry-run`);
+}
 const again = rerunWith().replace(/ --dry-run\b/, "");
 const dry = `${again} --dry-run`;
 if (rows.length < 2) misused(`import: ${path} has no data rows under its header`, `head -3 ${path}`);

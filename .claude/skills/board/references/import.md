@@ -1,6 +1,7 @@
-# CSV import
+# Spreadsheet import
 
-Read when the owner sends a spreadsheet to turn into cards.
+Read when the owner sends a spreadsheet to turn into cards: a CSV or an
+.xlsx (its first sheet).
 
 Always dry-run first, show the owner the mapping, then run.
 

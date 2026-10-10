@@ -153,6 +153,8 @@ if (!url) {
     assert.match(first.stdout, /^import: 3 new cards on Sales, 0 already there, left alone/);
     const second = db("import", "test/fixtures/jobs.csv", "--board", "sales");
     assert.match(second.stdout, /^import: 0 new cards on Sales, 3 already there, left alone/);
+    const xlsx = db("import", "test/fixtures/jobs.xlsx", "--board", "sales");
+    assert.match(xlsx.stdout, /^import: 0 new cards on Sales, 3 already there, left alone/, "the same sheet saved as .xlsx");
     assert.equal(json("items", "find", "Gutter", "--board", "sales").length, 2, "the sheet's two gutter jobs, once each");
   });
 }
