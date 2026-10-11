@@ -7,7 +7,7 @@ import { dueState, formatSize, PHOTO_TYPES, PRIORITIES } from "../db/queries";
 import type { Child } from "hono/jsx";
 import { Avatar, formatDay } from "./board";
 import { Icon } from "./icons";
-import { vocab } from "./layout";
+import { words } from "./layout";
 import type { NameOf } from "./people";
 import { ago } from "./list";
 import { badge, button, field, ghost, heading, primary } from "./ui";
@@ -23,6 +23,7 @@ export type ItemData = { item: Item; board: Board; columns: Status[]; activity: 
 export function ItemView({ data }: { data: ItemData }) {
   const { item, board, columns, activity, people, nameOf, files, user, drawer } = data;
   const url = `/items/${item.id}`;
+  const vocab = words(board);
   const assignees = [...people.map((p) => p.email)];
   if (item.assignee && !assignees.includes(item.assignee)) assignees.push(item.assignee);
   if (user && !assignees.includes(user)) assignees.push(user);
@@ -164,7 +165,7 @@ export function ItemView({ data }: { data: ItemData }) {
               ) : (
                 <li class="flex items-center gap-3 text-label text-ink-3">
                   <span class="flex size-6 shrink-0 items-center justify-center" aria-hidden="true"><span class="size-1.5 rounded-full bg-line-strong"></span></span>
-                  <span><span class="text-ink-2">{a.who ? nameOf(a.who) : "Someone"}</span> {describe(a, columns)} <span title={new Date(a.at).toISOString()}>· {ago(a.at)}</span></span>
+                  <span><span class="text-ink-2">{a.who ? nameOf(a.who) : "Someone"}</span> {describe(a, columns, vocab.one)} <span title={new Date(a.at).toISOString()}>· {ago(a.at)}</span></span>
                 </li>
               )
             ))}
@@ -255,7 +256,7 @@ const CHANGED: Record<string, string> = {
   title: "the title", notes: "the notes", assignee: "the assignee", due_on: "the due date", priority: "the priority",
   tags: "the tags", fields: "the details", customer_ref: "the customer", checklist: "the checklist",
 };
-const words = (list: string[]) => (list.length < 2 ? list.join("") : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`);
+const inWords = (list: string[]) => (list.length < 2 ? list.join("") : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`);
 
 // Photos show as a grid and open in the viewer; any other file is a tile
 // that downloads. The upload takes a pick, a drop or a paste (board.js makes
@@ -307,13 +308,13 @@ function Files({ item, files }: { item: Item; files: ItemFile[] }) {
   );
 }
 
-export function describe(a: Activity, columns: Status[]): string {
+export function describe(a: Activity, columns: Status[], one: string): string {
   const label = (k: string | null) => columns.find((c) => c.key === k)?.label ?? k ?? "";
   switch (a.kind) {
-    case "created": return `added this ${vocab.one.toLowerCase()} to ${label(a.to_status)}`;
+    case "created": return `added this ${one.toLowerCase()} to ${label(a.to_status)}`;
     case "moved": return `moved it from ${label(a.from_status)} to ${label(a.to_status)}`;
     case "reordered": return `reordered it in ${label(a.to_status)}`;
-    case "edited": return `changed ${words((a.body ?? "").split(", ").map((k) => CHANGED[k] ?? k))}`;
+    case "edited": return `changed ${inWords((a.body ?? "").split(", ").map((k) => CHANGED[k] ?? k))}`;
     case "comment": return `: ${a.body}`;
     case "attached": return `attached ${a.body}`;
     case "detached": return `removed ${a.body}`;

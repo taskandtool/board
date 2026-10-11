@@ -150,11 +150,14 @@ app.post("/boards", async (c) => {
   return c.redirect(`/b/${board.key}/columns`, 303);
 });
 
-app.post("/b/:board/rename", async (c) => {
+// The board's name and what a card on it is called.
+app.post("/b/:board/settings", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
-  const name = str((await c.req.parseBody()).name).trim().slice(0, 60);
+  const body = await c.req.parseBody();
+  const name = str(body.name).trim().slice(0, 60);
   if (name) await Q.renameBoard(c.var.db, board.id, name);
+  if ("item_one" in body || "item_many" in body) await Q.setBoardWords(c.var.db, board.id, str(body.item_one), str(body.item_many));
   return c.redirect(`/b/${board.key}/columns`, 303);
 });
 

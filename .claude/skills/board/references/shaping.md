@@ -15,6 +15,9 @@ that, and only when the column is empty.
 ## The keys, read once at start
 
 - `vocabulary.item` is what a card is called: `{ "one": "Job", "many": "Jobs" }`.
+  A board with other work names its own: `"item": { "one": "Candidate",
+  "many": "Candidates" }` on that board seeds it, and after the first run
+  `board.mjs words <board-key> "Candidate"` (or Board settings) changes it.
 - `boards[]` are the boards and their `columns[]` seeded on the first run:
   `{ key, label, wip_limit, is_done }`. Keys are slugs and never change;
   labels are free. Every board needs one `is_done` column. After the first

@@ -40,6 +40,14 @@ test("a limit of zero, a bad tag role and a select with no options are refused",
   assert.ok(p.some((x) => x.includes("no options")));
 });
 
+test("a board may name its own cards, with both words", () => {
+  const c = good();
+  c.boards[0].item = { one: "Candidate", many: "Candidates" };
+  assert.deepEqual(validate(c), []);
+  c.boards[0].item = { one: "Candidate" };
+  assert.ok(validate(c).some((p) => p.includes("boards[0].item")));
+});
+
 test("the example configs are valid", () => {
   for (const f of ["contractor", "realtor", "recruiter"]) {
     assert.deepEqual(validate(JSON.parse(readFileSync(`examples/${f}.json`, "utf8"))), [], f);

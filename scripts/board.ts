@@ -8,6 +8,7 @@ const HELP = `board.mjs: boards and their columns.
   list                                     every board and its columns
   add "name" [--key key]                   a new board (columns copied from the first board)
   rename <board-key> "name"
+  words <board-key> "One" ["Several"]       what a card on that board is called; none goes back to the config's
   columns [--board key]                    the columns with counts and limits
   column add "label" [--board key] [--key key] [--limit n] [--done]
   column rename <key> "label" [--board key]
@@ -21,7 +22,7 @@ const HELP = `board.mjs: boards and their columns.
 const a = args(["done"]);
 const json = has(a, "json");
 const [cmd, ...rest] = a._;
-usage(a, cmd, ["list", "add", "rename", "columns", "column"], HELP, "board", { list: [], add: ["key"], rename: [], columns: ["board"], column: ["board", "key", "limit", "done"] });
+usage(a, cmd, ["list", "add", "rename", "words", "columns", "column"], HELP, "board", { list: [], add: ["key"], rename: [], words: [], columns: ["board"], column: ["board", "key", "limit", "done"] });
 const COLUMN = ["add", "rename", "limit", "done", "move", "remove"];
 
 // Checked before the database: a missing or malformed argument is a misuse,
@@ -32,6 +33,7 @@ const key = flag(a, "key");
 if (key !== undefined && !Q.KEY.test(key)) misused(`${at}: --key ${key} must be lowercase letters, digits, - or _`, `node scripts/board.mjs ${cmd === "column" ? 'column add "Review" --key review' : 'add "Sales" --key sales'}${onBoard}`);
 if (cmd === "add" && !rest.length) misused(`${at}: add needs a name`, `node scripts/board.mjs add "Candidates"`);
 if (cmd === "rename" && !rest.slice(1).join(" ").trim()) misused(`${at}: rename needs a board key and the new name`, `node scripts/board.mjs rename ${rest[0] ?? "<board-key>"} "New name"`);
+if (cmd === "words" && !rest[1]?.trim()) misused(`${at}: words needs a board key and what one card is called`, `node scripts/board.mjs words ${rest[0] ?? "<board-key>"} "Candidate" "Candidates"`);
 if (cmd === "column") {
   if (!COLUMN.includes(sub)) misused(`${at}: no column command ${sub ?? "(none)"}; column commands: ${COLUMN.join(", ")}`, "node scripts/board.mjs --help");
   if (sub !== "add") checkFlags(a, ["board"], `board column ${sub}`, "node scripts/board.mjs --help");
@@ -57,7 +59,7 @@ await withDb(async (pool) => {
       const boards = await Q.boards(pool);
       const rows: { board: Q.Board; columns: Q.Status[] }[] = [];
       for (const b of boards) rows.push({ board: b, columns: await Q.statuses(pool, b.id) });
-      out(json, rows, () => rows.map((r) => `${r.board.key}  ${r.board.name}\n` + r.columns.map((c) => `    ${c.key}  ${c.label}${c.wip_limit != null ? ` (limit ${c.wip_limit})` : ""}${c.is_done ? " [done]" : ""}`).join("\n")).join("\n"));
+      out(json, rows, () => rows.map((r) => `${r.board.key}  ${r.board.name}${r.board.item_one ? `  (cards: ${r.board.item_one}, ${r.board.item_many})` : ""}\n` + r.columns.map((c) => `    ${c.key}  ${c.label}${c.wip_limit != null ? ` (limit ${c.wip_limit})` : ""}${c.is_done ? " [done]" : ""}`).join("\n")).join("\n"));
       break;
     }
     case "add": {
@@ -77,6 +79,15 @@ await withDb(async (pool) => {
       if (b.name === name) { report(json, { ok: true, already: true }, `${b.key} is already called ${name}, left alone`, { next: "node scripts/board.mjs list" }); break; }
       await Q.renameBoard(pool, b.id, name);
       report(json, { ok: true }, `${b.key}: ${b.name} → ${name}`, { next: "node scripts/board.mjs list" });
+      break;
+    }
+    case "words": {
+      const b = await Q.boardByKey(pool, rest[0]);
+      if (!b) misused(`${at}: no board ${rest[0]}; boards: ${(await Q.boards(pool)).map((x) => `${x.key} (${x.name})`).join(", ")}`, "node scripts/board.mjs list");
+      const reset = rest[1] === "none";
+      await Q.setBoardWords(pool, b.id, reset ? "" : rest[1], reset ? "" : rest[2] ?? "");
+      const now = (await Q.boardByKey(pool, b.key))!;
+      report(json, now, reset ? `${b.key}: a card is called what the config says again` : `${b.key}: one card is called ${now.item_one}, several are ${now.item_many}`, { next: "node scripts/board.mjs list" });
       break;
     }
     case "columns": {

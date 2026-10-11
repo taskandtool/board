@@ -4,7 +4,7 @@ import type { Item, Status } from "../db/queries";
 import { dueState } from "../db/queries";
 import { type BoardData, DueBadge, FilterBar, PriorityBadge, TagBadge } from "./board";
 import type { NameOf } from "./people";
-import { vocab } from "./layout";
+import { words } from "./layout";
 
 export type Sort = "due_on" | "priority" | "updated_at" | "title" | "created_at";
 
@@ -36,7 +36,7 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
         <table class="w-full border-collapse">
           <thead class="border-b border-line bg-canvas text-label">
             <tr>
-              <th class={th + " pl-4"}>{vocab.one}</th>
+              <th class={th + " pl-4"}>{words(data.board).one}</th>
               {showsField("customer_ref") ? <th class={wide + " " + th}>Customer</th> : null}
               {faceFields.map((f) => <th class={wide + " " + th + (f.type === "money" ? " text-right" : "")}>{f.label}</th>)}
               <th class={wide + " " + th}>Column</th>

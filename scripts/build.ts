@@ -67,7 +67,9 @@ await build({
   target: "es2022",
   jsx: "automatic",
   jsxImportSource: "hono/jsx",
-  define: { "process.env.NODE_ENV": '"production"' },
+  // Each build names its own stylesheet and scripts (src/views/layout.tsx),
+  // so a browser never keeps last deploy's CSS.
+  define: { "process.env.NODE_ENV": '"production"', __ASSET_VERSION__: JSON.stringify(Date.now().toString(36)) },
   logLevel: "warning",
 });
 console.log(`built: ${dist}/ and ${join(out, "worker.mjs")}`);

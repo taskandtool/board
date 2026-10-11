@@ -4,7 +4,7 @@
 import { cfg, faceOf, formatMoney, moneyValue, showsField, tagRole, todayIn, totalFields } from "../config";
 import type { Board, BoardItem, Filters, Person, Status } from "../db/queries";
 import { dueState, PRIORITIES, today } from "../db/queries";
-import { vocab } from "./layout";
+import { words } from "./layout";
 import { initials, type NameOf } from "./people";
 import { Icon } from "./icons";
 import { badge, button, control, ghost, menuItem, primary } from "./ui";
@@ -38,6 +38,7 @@ export function BoardView({ data }: { data: BoardData }) {
   const base = `/b/${board.key}`;
   const refresh = `${base}${filterQuery(filters)}`;
   const filtering = filtersActive(filters);
+  const vocab = words(board);
   return (
     <div
       id="board"
@@ -117,6 +118,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
   const tagNames = new Set<string>(cfg.tags.map((t) => t.name));
   for (const it of items) for (const t of it.tags) tagNames.add(t);
   const target = list ? "#list" : "#board";
+  const vocab = words(board);
   const select = "shrink-0 " + control;
   const toggle = "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 py-1.5 shadow-card hover:bg-canvas has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent";
   const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");

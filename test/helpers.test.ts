@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { cleanChecklist, cleanDate, cleanFileName, cleanTags, cleanTitle, clampPriority, dueState, formatSize, slugify } from "../src/db/queries";
+import { cleanChecklist, cleanDate, cleanFileName, cleanTags, cleanTitle, clampPriority, dueState, formatSize, plural, slugify } from "../src/db/queries";
 import type { Activity } from "../src/db/queries";
 import { foldEdits } from "../src/views/item";
 import { initials, namer } from "../src/views/people";
@@ -132,6 +132,10 @@ test("file names and sizes are cleaned for showing", () => {
   assert.equal(formatSize(310_940), "304 KB");
   assert.equal(formatSize(10 * 1024 * 1024), "10 MB");
   assert.equal(formatSize(2_206_622), "2.1 MB");
+});
+
+test("a card's word gets a regular plural", () => {
+  assert.deepEqual(["Job", "Property", "Day", "Box", "Batch"].map(plural), ["Jobs", "Properties", "Days", "Boxes", "Batches"]);
 });
 
 test("money reads forgivingly and shows with its symbol", () => {

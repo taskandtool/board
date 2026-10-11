@@ -37,6 +37,7 @@ node scripts/items.mjs find "words"                    # cards matching the word
 node scripts/items.mjs summary                         # counts per column, overdue, due this week
 node scripts/items.mjs archive-done --older 14         # archives cards finished more than 14 days ago
 node scripts/board.mjs list                            # boards and their columns, with keys
+node scripts/board.mjs words <board-key> "Candidate"   # "board words: candidates: one card is called Candidate, several are Candidates"
 node scripts/import.mjs <file.csv> --dry-run           # the mapping, new and already-there counts, ten rows; nothing written
 node scripts/import.mjs <file.csv>                     # "import: 9 new cards on Work, 3 already there, left alone"
 node scripts/export.mjs [--board key]                  # the board as CSV on stdout

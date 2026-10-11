@@ -38,6 +38,7 @@ Everything a business wants changed is in one of these.
    node scripts/board.mjs column rename doing "In progress"
    node scripts/board.mjs column done invoiced yes
    node scripts/board.mjs add "Candidates"          # a second board
+   node scripts/board.mjs words candidates "Candidate"  # what a card on it is called
    ```
 
    A column that still holds cards cannot be removed; move them first.

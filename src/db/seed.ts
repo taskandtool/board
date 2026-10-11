@@ -9,16 +9,16 @@ import { cfg } from "../config";
 const EXAMPLES = [
   { col: 0, title: "Click a card to open it", notes: "Each card is one piece of work. Open it to add notes, a due date, who it's assigned to, a priority, tags, a checklist and comments. Only the title is required." },
   { col: 0, title: "Drag a card to another column", notes: "Try it with this one; on a phone, press and hold it first. The dots on a card open the same moves as a menu. Each move goes into the card's history, with who made it." },
-  { col: 1, title: "Change the columns to fit your work", notes: "Edit columns, at the top right, adds, renames and reorders columns. Give a column a limit and its count turns yellow when it holds too many; it still takes the card." },
+  { col: 1, title: "Change the columns to fit your work", notes: "Board settings, in the menu at the top right, adds, renames and reorders columns, and names what a card is. Give a column a limit and its count turns yellow when it holds too many; it still takes the card." },
   { col: 1, title: "Ask the AI to update the board", notes: "In chat, try \"add a job for the Smith roof, due Friday\" or \"what's overdue?\". Ask it to set the board up for your business and it changes the columns, the names and the fields on each card." },
-  { col: 2, title: "Remove these examples", notes: "Click Remove the examples, under the board. All five go at once." },
+  { col: 2, title: "Remove these examples", notes: "Click Remove the examples, above the board. All five go at once." },
 ];
 
 export async function seed(pool: pg.Pool): Promise<void> {
   for (const [bi, b] of cfg.boards.entries()) {
     await pool.query(
-      "insert into boards (key, name, position) values ($1, $2, $3) on conflict (key) do nothing",
-      [b.key, b.name, bi],
+      "insert into boards (key, name, position, item_one, item_many) values ($1, $2, $3, $4, $5) on conflict (key) do nothing",
+      [b.key, b.name, bi, b.item?.one ?? null, b.item?.many ?? null],
     );
     const board = (await pool.query<{ id: number }>("select id from boards where key = $1", [b.key])).rows[0];
     for (const [ci, col] of b.columns.entries()) {

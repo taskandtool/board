@@ -29,7 +29,8 @@ runs anywhere with Node 20 and a Postgres.
 - **Filter** by search, assignee, tag or due date, or just "mine".
 - **A list view** of the same cards: sorted, grouped by column, exported
   as CSV. A CSV import for the spreadsheet you use today.
-- **Several boards** in one app (jobs on one, candidates on another).
+- **Several boards** in one app (jobs on one, candidates on another), each
+  calling its cards what that work is called.
 - **Due badges** (overdue, today, soon), an archive with archive-by-age,
   and an activity trail per card.
 - **A quiet refresh** every 30 seconds where that is free (production on

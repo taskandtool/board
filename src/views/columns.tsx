@@ -2,7 +2,8 @@
 // this is the owner's way to change them without asking the AI.
 import type { Board, Item, Status } from "../db/queries";
 import { formatDay } from "./board";
-import { vocab } from "./layout";
+import { cfg } from "../config";
+import { asset, words } from "./layout";
 import { ago } from "./list";
 import { button, control, ghost, primary } from "./ui";
 import { Icon } from "./icons";
@@ -26,18 +27,32 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
   // Every row saves when one of its fields changes; the page re-renders in
   // place and keeps the focus where it was (each field has an id). On a
   // phone a row is the label over its settings.
+  const vocab = words(board);
   const iconButton = "flex size-8 items-center justify-center rounded-control border border-line-strong bg-surface shadow-card hover:bg-canvas";
   return (
     <div id="columns" class="mx-auto flex max-w-3xl flex-col gap-6" hx-target="#columns" hx-select="#columns" hx-swap="outerHTML">
       <PageHead board={board} title="Board settings">
-        Columns are the steps a {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once: over it, the column says so and refuses nothing. Cards in a done column count as finished.
+        Columns are the steps each {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once: over it, the column says so and refuses nothing. Cards in a done column count as finished.
       </PageHead>
 
-      {/* A plain post: the new name is in the header's board tabs too. */}
-      <form method="post" action={`${base}/rename`} onchange="this.requestSubmit()" class={card + " flex flex-col gap-1.5 p-4 text-label sm:flex-row sm:items-center sm:gap-4"}>
-        <label for="board-name" class="font-medium sm:w-32">Board name</label>
-        <input id="board-name" name="name" value={board.name} required maxlength={60} class={"w-full sm:max-w-xs " + control} />
-        <noscript><button class={button}>Rename board</button></noscript>
+      {/* A plain post: the new name is in the header's board tabs too, and
+          the words are on every page of the board. */}
+      <form method="post" action={`${base}/settings`} onchange="this.requestSubmit()" class={card + " flex flex-col divide-y divide-line text-label"}>
+        <div class="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:gap-4">
+          <label for="board-name" class="shrink-0 font-medium sm:w-40">Board name</label>
+          <input id="board-name" name="name" value={board.name} required maxlength={60} class={"w-full sm:max-w-xs " + control} />
+        </div>
+        <div class="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-start sm:gap-4">
+          <div class="shrink-0 sm:w-40 sm:pt-1.5">
+            <p class="font-medium">Cards are called</p>
+            <p class="mt-0.5 text-ink-3">Job, Candidate, Listing, Order</p>
+          </div>
+          <div class="grid w-full grid-cols-2 gap-3 sm:max-w-xs">
+            <label class="flex flex-col gap-1"><span class="text-ink-3">One</span><input id="item-one" name="item_one" value={board.item_one ?? ""} placeholder={cfg.vocabulary.item.one} maxlength={30} class={control} /></label>
+            <label class="flex flex-col gap-1"><span class="text-ink-3">Several</span><input id="item-many" name="item_many" value={board.item_many ?? ""} placeholder={cfg.vocabulary.item.many} maxlength={30} class={control} /></label>
+          </div>
+        </div>
+        <noscript><div class="p-4"><button class={button}>Save</button></div></noscript>
       </form>
 
       <div class={card + " text-label"}>
@@ -78,6 +93,7 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
 
 export function ArchiveView({ board, items, columns, archiveAfter }: { board: Board; items: Item[]; columns: Status[]; archiveAfter: number }) {
   const base = `/b/${board.key}`;
+  const vocab = words(board);
   return (
     <div class="mx-auto flex max-w-3xl flex-col gap-6">
       <PageHead board={board} title="Archive">Archived {vocab.many.toLowerCase()} leave the board and wait here. Restore one and it goes back to its column.</PageHead>
@@ -111,7 +127,7 @@ export function ArchiveView({ board, items, columns, archiveAfter }: { board: Bo
 export function WaitingView({ state, error }: { state: string; error: string }) {
   return (
     <html lang="en">
-      <head><meta charset="utf-8" /><meta http-equiv="refresh" content="5" /><title>Board</title><link rel="stylesheet" href="/board.css" /></head>
+      <head><meta charset="utf-8" /><meta http-equiv="refresh" content="5" /><title>Board</title><link rel="stylesheet" href={asset("/board.css")} /></head>
       <body class="min-h-screen bg-canvas p-8 text-ink font-body text-copy">
         <h1 class="text-title font-semibold">The board is waiting for its database</h1>
         <p class="mt-2 max-w-xl text-ink-2">

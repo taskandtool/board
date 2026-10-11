@@ -119,6 +119,13 @@ if (!url) {
     assert.deepEqual(json("board", "columns", "--board", "sales").map((c: { key: string }) => c.key), ["todo", "doing", "done"]);
     assert.equal(json("board", "list").find((x: { board: { key: string } }) => x.board.key === "sales").board.name, "Sales");
 
+    // What a card is called, per board: one word gets its plural, none goes back.
+    assert.equal(db("board", "words", "sales").code, 2);
+    assert.match(db("board", "words", "sales", "Deal").stdout, /sales: one card is called Deal, several are Deals/);
+    assert.equal(json("board", "list").find((x: { board: { key: string } }) => x.board.key === "sales").board.item_many, "Deals");
+    db("board", "words", "sales", "none");
+    assert.equal(json("board", "list").find((x: { board: { key: string } }) => x.board.key === "sales").board.item_one, null);
+
     // Repeated --tag keeps cards carrying every tag.
     json("items", "add", "one", "--board", "sales", "--tag", "a");
     json("items", "add", "both", "--board", "sales", "--tag", "a", "--tag", "b");

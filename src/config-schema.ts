@@ -1,7 +1,7 @@
 // The shape of board.config.json and the validator, with no file loaded:
 // scripts/check.mjs imports this to report on a config the server refused.
 export type ColumnConfig = { key: string; label: string; wip_limit?: number | null; is_done?: boolean };
-export type BoardConfig = { key: string; name: string; columns: ColumnConfig[] };
+export type BoardConfig = { key: string; name: string; columns: ColumnConfig[]; item?: { one: string; many: string } };
 export type TagConfig = { name: string; role: string };
 export type CustomField = { key: string; label: string; type: FieldType; options?: string[]; on_card?: boolean };
 export type FieldType = "text" | "number" | "money" | "phone" | "date" | "select";
@@ -41,6 +41,7 @@ export function validate(raw: unknown): string[] {
       if (keys.has(b.key)) out.push(`boards[${i}].key ${b.key} repeats`);
       keys.add(b.key);
       if (!b.name) out.push(`boards[${i}].name is missing`);
+      if (b.item !== undefined && (typeof b.item?.one !== "string" || typeof b.item?.many !== "string" || !b.item.one || !b.item.many)) out.push(`boards[${i}].item needs one and many, like { "one": "Candidate", "many": "Candidates" }`);
       if (!Array.isArray(b.columns) || b.columns.length === 0) return out.push(`boards[${i}].columns must list at least one column`);
       const ckeys = new Set<string>();
       b.columns.forEach((col, j) => {

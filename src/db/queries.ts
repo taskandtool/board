@@ -9,7 +9,7 @@ import { cfg, todayIn } from "../config";
 
 export const today = () => todayIn(cfg.time_zone);
 
-export type Board = { id: number; key: string; name: string; position: number; archived_at: Date | null };
+export type Board = { id: number; key: string; name: string; position: number; archived_at: Date | null; item_one: string | null; item_many: string | null };
 export type Status = {
   id: number; board_id: number; key: string; label: string; position: number;
   wip_limit: number | null; is_done: boolean; archived_at: Date | null;
@@ -80,6 +80,21 @@ export async function createBoard(q: Q, name: string, key = slugify(name)): Prom
 
 export async function renameBoard(q: Q, id: number, name: string): Promise<void> {
   await q.query("update boards set name = $2 where id = $1", [id, name]);
+}
+
+// What one card on this board is called, and several; empty goes back to
+// the config's words. One without several gets the regular plural, which
+// the owner can correct.
+export async function setBoardWords(q: Q, id: number, one: string, many: string): Promise<void> {
+  const clean = (w: string) => w.replace(/\s+/g, " ").trim().slice(0, 30) || null;
+  const o = clean(one);
+  await q.query("update boards set item_one = $2, item_many = $3 where id = $1", [id, o, o ? clean(many) ?? plural(o) : null]);
+}
+
+export function plural(word: string): string {
+  if (/[^aeiou]y$/i.test(word)) return word.slice(0, -1) + "ies";
+  if (/(s|x|z|ch|sh)$/i.test(word)) return word + "es";
+  return word + "s";
 }
 
 // ---- statuses (columns) ---------------------------------------------------

@@ -7,6 +7,14 @@ import { Icon } from "./icons";
 import { initials } from "./people";
 import { control, ghost, primary } from "./ui";
 
+// The stylesheet and scripts carry a version, so a browser fetches them again
+// after a change instead of keeping an old copy: the build's time in
+// production, the server's start in dev (which restarts on every change to
+// src/ or styles/).
+declare const __ASSET_VERSION__: string | undefined;
+const VERSION = typeof __ASSET_VERSION__ === "string" ? __ASSET_VERSION__ : Date.now().toString(36);
+export const asset = (path: string) => `${path}?v=${VERSION}`;
+
 export type Shell = { boards: Board[]; board?: Board | null; view: "board" | "list" | "columns" | "item" | "archive"; user: string | null; userName: string };
 
 export function Layout({ title, shell, children }: { title: string; shell: Shell; children?: Child }) {
@@ -18,11 +26,11 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title}</title>
         <meta name="robots" content="noindex" />
-        <link rel="stylesheet" href="/board.css" />
+        <link rel="stylesheet" href={asset("/board.css")} />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <script src="/vendor/htmx.min.js" defer></script>
-        <script src="/vendor/Sortable.min.js" defer></script>
-        <script src="/board.js" defer></script>
+        <script src={asset("/vendor/htmx.min.js")} defer></script>
+        <script src={asset("/vendor/Sortable.min.js")} defer></script>
+        <script src={asset("/board.js")} defer></script>
       </head>
       <body class={"bg-canvas text-ink font-body text-copy " + (view === "board" ? "flex h-dvh flex-col" : "min-h-screen")} hx-headers='{"X-Requested-With":"htmx"}'>
         <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-1 focus:text-accent-ink">Skip to content</a>
@@ -68,4 +76,9 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
   );
 }
 
-export const vocab = cfg.vocabulary.item;
+// What one card is called on a board, and several: the board's own words,
+// else the config's.
+export const words = (board?: Board | null) => ({
+  one: board?.item_one || cfg.vocabulary.item.one,
+  many: board?.item_many || cfg.vocabulary.item.many,
+});
