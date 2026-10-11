@@ -68,7 +68,8 @@
       {
         "key": "address",
         "label": "Address",
-        "type": "text"
+        "type": "text",
+        "on_card": true
       },
       {
         "key": "crew",
@@ -82,7 +83,8 @@
       {
         "key": "quote",
         "label": "Quote",
-        "type": "number"
+        "type": "money",
+        "on_card": true
       }
     ]
   },

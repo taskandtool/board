@@ -27,10 +27,12 @@
   /* The one action colour */
   --color-accent: #2f5bea;                    /* 5.1:1 on canvas, 4.6:1 on panel */
   --color-accent-ink: #ffffff;
+  --color-accent-soft: #e9eefd;               /* a filter that is on; accent on it is 4.6:1 */
 
   /* Signals: a late card, a card due soon or a column over its limit */
   --color-late: #b3261e;
   --color-late-ink: #ffffff;
+  --color-late-soft: #fbe9e7;                 /* an overdue badge's ground; late on it is 5.6:1 */
   --color-warn: #f3dfa2;
   --color-warn-ink: #4a3a00;
 

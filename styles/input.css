@@ -4,6 +4,7 @@
 @source "../src";
 /* Tag colours are composed at runtime (bg-tag-N), so name them here for Tailwind. */
 @source inline("bg-tag-{0,1,2,3,4,5,6}");
+@source inline("has-[:checked]:bg-tag-{1,2,3,4,5,6}");
 /* A screen with no hover (a phone): controls that wait for a hover show. */
 @custom-variant touch (@media (hover: none));
 
@@ -30,8 +31,14 @@
     background-position: right 0.5rem center;
     background-size: 0.75rem;
   }
+  /* A select in a card's details shows its chevron only when pointed at. */
+  select[data-field]:not(:hover, :focus) { background-image: none; }
   input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
-  input[type="checkbox"] { accent-color: var(--color-accent); }
+  input[type="checkbox"] { accent-color: var(--color-accent); width: 1rem; height: 1rem; }
+  /* A phone zooms into any text box under 16px; hold them there. */
+  @media (pointer: coarse) {
+    input:not([type="checkbox"], [type="radio"]), select, textarea { font-size: 1rem; }
+  }
   button:disabled { opacity: 0.5; cursor: default; }
   summary::-webkit-details-marker { display: none; }
   /* SortableJS states */

@@ -61,6 +61,22 @@ if (!url) {
     await pool.query(readFileSync("migrations/0002_item_files.sql", "utf8"));
   });
 
+  test("saving a card's tags keeps the palette chips that are on and the typed ones", async (t) => {
+    if (!(await scratch(t))) return;
+    const { default: app } = await import("../src/app");
+    const [board] = await Q.boards(pool);
+    const it = await Q.createItem(pool, board.id, { title: "tags", tags: ["Client", "old"] }, "t@x");
+    const host = "https://board.example";
+    const res = await app.request(host + `/items/${it.id}`, {
+      method: "POST",
+      body: new URLSearchParams({ "tag:Waiting": "1", tags: "roof, Waiting" }),
+      headers: { host: "board.example", origin: host, "content-type": "application/x-www-form-urlencoded" },
+    }, { runtime: { open: () => ({ db: pool }), onPlatform: false, refreshSeconds: 0, fallbackUser: "" } });
+    assert.equal(res.status, 200);
+    assert.deepEqual((await Q.item(pool, it.id))!.tags, ["Waiting", "roof"], "Client is off, old is gone, Waiting once");
+    await pool.query("delete from items where id = $1", [it.id]); // the next test counts its column
+  });
+
   test("a move renumbers both columns, keeps completed_at honest, and can be undone", async (t) => {
     if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);

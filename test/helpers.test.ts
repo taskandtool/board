@@ -10,6 +10,7 @@ import { guessMap, parseCsv, parseDate, parsePriority } from "../scripts/csv";
 import { flag, flags, parseArgs } from "../src/data/cli.mjs";
 import { sortItems } from "../src/views/list";
 import { readXlsx } from "../scripts/xlsx";
+import { moneyValue, showValue } from "../src/config";
 
 test("titles, tags, dates and priorities are cleaned, never trusted", () => {
   assert.equal(cleanTitle("  a   b\n c "), "a b c");
@@ -104,6 +105,7 @@ test("people show by the name they gave, else their email's first part as words"
   assert.equal(nameOf("AI"), "AI");
   assert.equal(initials("Maria Lopez"), "ML");
   assert.equal(initials("Sam"), "S");
+  assert.equal(initials("Kelly (dispatch)"), "K");
 });
 
 test("the trail folds a run of one person's edits into one line, and nothing else", () => {
@@ -130,4 +132,14 @@ test("file names and sizes are cleaned for showing", () => {
   assert.equal(formatSize(310_940), "304 KB");
   assert.equal(formatSize(10 * 1024 * 1024), "10 MB");
   assert.equal(formatSize(2_206_622), "2.1 MB");
+});
+
+test("money reads forgivingly and shows with its symbol", () => {
+  assert.equal(moneyValue("$8,900"), 8900);
+  assert.equal(moneyValue("tbd"), null);
+  assert.equal(moneyValue("1,200-1,500"), null);
+  assert.equal(showValue({ key: "q", label: "Quote", type: "money" }, "14350"), "$14,350");
+  assert.equal(showValue({ key: "q", label: "Quote", type: "money" }, "tbd"), "tbd");
+  assert.equal(showValue({ key: "q", label: "Quote", type: "money" }, "1,200-1,500"), "1,200-1,500");
+  assert.equal(showValue({ key: "a", label: "Address", type: "text" }, " 12 Elm "), "12 Elm");
 });

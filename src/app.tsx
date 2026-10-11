@@ -341,7 +341,9 @@ app.post("/items/:id", async (c) => {
   if ("assignee" in body) patch.assignee = str(body.assignee).toLowerCase() || null;
   if ("due_on" in body) patch.due_on = str(body.due_on) || null;
   if ("priority" in body) patch.priority = num(body.priority);
-  if ("tags" in body) patch.tags = Q.cleanTags(str(body.tags));
+  // The card's tags are the palette's chips that are on ("tag:Roof") and
+  // whatever is typed in the box beside them.
+  if ("tags" in body) patch.tags = Q.cleanTags([...Object.keys(body).filter((k) => k.startsWith("tag:")).map((k) => k.slice(4)), ...str(body.tags).split(",")]);
   if ("customer_ref" in body) patch.customer_ref = str(body.customer_ref).slice(0, 200) || null;
   if (Object.keys(fields).length) patch.fields = fields;
   let updated = await Q.updateItem(c.var.db, item.id, patch, c.get("user"));

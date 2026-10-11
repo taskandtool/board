@@ -45,3 +45,15 @@ test("the example configs are valid", () => {
     assert.deepEqual(validate(JSON.parse(readFileSync(`examples/${f}.json`, "utf8"))), [], f);
   }
 });
+
+test("money and phone fields ride on the card; a bad currency or on_card is refused", () => {
+  const c = good();
+  c.card.custom.push({ key: "quote", label: "Quote", type: "money", on_card: true }, { key: "phone", label: "Phone", type: "phone" });
+  c.currency = "EUR";
+  assert.deepEqual(validate(c), []);
+  c.currency = "euros";
+  c.card.custom[0].on_card = "yes";
+  const p = validate(c);
+  assert.ok(p.some((x) => x.includes("currency")));
+  assert.ok(p.some((x) => x.includes("on_card")));
+});

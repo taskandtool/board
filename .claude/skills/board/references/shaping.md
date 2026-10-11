@@ -27,9 +27,13 @@ that, and only when the column is empty.
   `assignee`, `priority`, `tags`, `checklist`, `customer_ref`.
 - `card.custom[]` adds fields without a migration:
   `{ "key": "crew", "label": "Crew", "type": "select", "options": ["North", "South"] }`
-  (types `text`, `number`, `date`, `select`). They live in `items.fields`
-  as JSON and show on the card, in CSV, and in the scripts
-  (`--field crew=North`).
+  (types `text`, `number`, `money`, `phone`, `date`, `select`). They live
+  in `items.fields` as JSON and show on the open card, in CSV, and in the
+  scripts (`--field crew=North`). `"on_card": true` puts one on the card
+  face and in the list, after the customer: pick the one or two a person
+  scans for (an address, a quote). A `money` field on the face totals
+  each column; `currency` (ISO code, default `USD`) sets its symbol. A
+  `phone` field gets a Call link.
 - `default_view` (`board` or `list`) and `archive_done_after_days`.
 - `time_zone`, an IANA name (`America/Chicago`). Due dates are dates, not
   instants, so "overdue" and "due today" are judged in this zone; it ships

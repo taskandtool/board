@@ -82,6 +82,7 @@ const fields = (() => {
     if (!def) misused(`${at}: --field ${kv}: no custom field ${k || "(none named)"}; declared: ${cfg.card.custom.map((x) => x.key).join(", ") || "none"}`, "node scripts/items.mjs --help");
     const v = kv.slice(i + 1).trim();
     if (def.type === "select" && v && !def.options!.includes(v)) misused(`${at}: --field ${k}=${v}: ${k} is one of ${def.options!.join(", ")}`, "node scripts/items.mjs --help");
+    if ((def.type === "number" || def.type === "money") && v && !Number.isFinite(Number(v))) misused(`${at}: --field ${k}=${v}: ${k} is a number; write it without symbols, like ${k}=1250`, "node scripts/items.mjs --help");
     f[k] = v;
   }
   return f;

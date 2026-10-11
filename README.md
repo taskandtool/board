@@ -44,7 +44,8 @@ runs anywhere with Node 20 and a Postgres.
 
 `board.config.json` holds the words (`Jobs`, `Candidates`), the boards and
 columns seeded on the first run, the tag palette, which fields a card
-shows, custom fields (`text`, `number`, `date`, `select`), the default
+shows, custom fields (`text`, `number`, `money`, `phone`, `date`,
+`select`, and which ride on the card face), the default
 view, the archive age and the business's time zone (due dates are judged
 there, not on the machine's clock). `examples/` has three worked configs: a
 contractor, a real estate office, a recruiter. Ask the AI to shape the

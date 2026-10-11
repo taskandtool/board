@@ -14,4 +14,5 @@ const fromEmail = (email: string) =>
   email.split("@")[0].split(/[._+-]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ") || email;
 
 // One or two letters for a name: "Maria" is M, "Maria Lopez" is ML.
-export const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+// Words that start with no letter, like "(dispatch)", are skipped.
+export const initials = (name: string) => name.split(/\s+/).filter((w) => /^\p{L}/u.test(w)).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || name.slice(0, 1).toUpperCase();

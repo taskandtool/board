@@ -1,15 +1,16 @@
 // The document around every page: head, header with the board switcher and
-// the view toggle, who is signed in, the drawer and toast slots.
+// who is signed in, the drawer and toast slots.
 import type { Child } from "hono/jsx";
 import { cfg } from "../config";
 import type { Board } from "../db/queries";
-import { control, primary } from "./ui";
+import { Icon } from "./icons";
+import { initials } from "./people";
+import { control, ghost, primary } from "./ui";
 
 export type Shell = { boards: Board[]; board?: Board | null; view: "board" | "list" | "columns" | "item" | "archive"; user: string | null; userName: string };
 
 export function Layout({ title, shell, children }: { title: string; shell: Shell; children?: Child }) {
   const { boards, board, view, user, userName } = shell;
-  const base = board ? `/b/${board.key}` : "/";
   return (
     <html lang="en">
       <head>
@@ -26,44 +27,37 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
       <body class={"bg-canvas text-ink font-body text-copy " + (view === "board" ? "flex h-dvh flex-col" : "min-h-screen")} hx-headers='{"X-Requested-With":"htmx"}'>
         <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-1 focus:text-accent-ink">Skip to content</a>
         <header class="border-b border-line bg-surface">
-          <div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
-            <nav aria-label="Boards" class="flex flex-wrap items-center gap-1">
+          <div class="flex h-14 items-center gap-3 px-4">
+            <nav aria-label="Boards" class="-ml-1 flex min-w-0 items-center gap-1 overflow-x-auto">
               {boards.map((b) => (
-                <a href={`/b/${b.key}`} class={"rounded-control px-2 py-1 no-underline " + (board?.id === b.id ? "bg-panel font-semibold" : "text-ink-2 hover:bg-panel")} aria-current={board?.id === b.id ? "page" : undefined}>
+                <a href={`/b/${b.key}`} class={"shrink-0 rounded-control px-3 py-1.5 font-medium no-underline " + (board?.id === b.id ? "bg-panel text-ink" : "text-ink-2 hover:bg-panel hover:text-ink")} aria-current={board?.id === b.id ? "page" : undefined}>
                   {b.name}
                 </a>
               ))}
-              <details class="relative">
-                <summary class="cursor-pointer list-none rounded-control px-2 py-1 text-ink-3 hover:bg-panel" aria-label="New board" title="New board">+</summary>
-                <form method="post" action="/boards" class="absolute left-0 z-20 mt-1 flex w-64 gap-2 rounded-card border border-line bg-surface p-2 shadow-lift">
-                  <input name="name" required maxlength={60} placeholder="New board name" class={"w-full " + control} aria-label="New board name" />
-                  <button class={primary}>Add</button>
+            </nav>
+            <details class="relative shrink-0">
+              <summary class={"cursor-pointer list-none " + ghost} aria-label="New board" title="New board"><Icon name="plus" /></summary>
+              <form method="post" action="/boards" class="fixed inset-x-4 top-14 z-20 flex gap-2 rounded-card border border-line bg-surface p-3 text-label shadow-lift sm:absolute sm:inset-x-auto sm:top-auto sm:left-0 sm:mt-2 sm:w-72">
+                <input name="name" required maxlength={60} placeholder="New board name" class={"w-full " + control} aria-label="New board name" />
+                <button class={primary}>Add</button>
+              </form>
+            </details>
+            {user ? (
+              <details class="relative ml-auto shrink-0">
+                <summary class="flex cursor-pointer list-none items-center gap-2 rounded-control py-1 pr-2 pl-1 text-label text-ink-2 hover:bg-panel" title={`Signed in through Task & Tool as ${user}`}>
+                  <span class="inline-flex size-7 items-center justify-center rounded-full bg-panel font-semibold text-ink-2" aria-hidden="true">{initials(userName)}</span>
+                  <span class="hidden max-w-40 truncate sm:inline">{userName}</span>
+                </summary>
+                <form method="post" action="/me" class="absolute right-0 z-20 mt-2 flex w-72 flex-col gap-3 rounded-card border border-line bg-surface p-4 text-label shadow-lift">
+                  <label class="flex flex-col gap-1.5"><span class="font-medium text-ink">Your name on the board</span><input name="name" value={userName} maxlength={60} class={control} /></label>
+                  <span class="truncate text-ink-3">{user}</span>
+                  <button class={"self-start " + primary}>Save</button>
                 </form>
               </details>
-            </nav>
-            <div class="ml-auto flex min-w-0 flex-wrap items-center gap-1 text-label">
-              {board ? (
-                <>
-                  <a href={base} class={"rounded-control px-2 py-1 no-underline " + (view === "board" ? "bg-panel" : "text-ink-2 hover:bg-panel")}>Board</a>
-                  <a href={`${base}/list`} class={"rounded-control px-2 py-1 no-underline " + (view === "list" ? "bg-panel" : "text-ink-2 hover:bg-panel")}>List</a>
-                  <a href={`${base}/columns`} class={"rounded-control px-2 py-1 no-underline " + (view === "columns" ? "bg-panel" : "text-ink-2 hover:bg-panel")}>Edit columns</a>
-                  <a href={`${base}/archive`} class={"rounded-control px-2 py-1 no-underline " + (view === "archive" ? "bg-panel" : "text-ink-2 hover:bg-panel")}>Archive</a>
-                </>
-              ) : null}
-              {user ? (
-                <details class="relative ml-3">
-                  <summary class="max-w-40 cursor-pointer list-none truncate rounded-control px-2 py-1 text-ink-3 hover:bg-panel" title={`Signed in through Task & Tool as ${user}`}>{userName}</summary>
-                  <form method="post" action="/me" class="absolute right-0 z-20 mt-1 flex w-72 flex-col gap-2 rounded-card border border-line bg-surface p-3 shadow-lift">
-                    <label class="flex flex-col gap-1"><span class="text-ink-3">Your name on the board</span><input name="name" value={userName} maxlength={60} class={control} /></label>
-                    <span class="truncate text-ink-3">{user}</span>
-                    <button class={"self-start " + primary}>Save</button>
-                  </form>
-                </details>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </header>
-        <main id="main" class={"px-4 py-3 " + (view === "board" ? "flex min-h-0 flex-1 flex-col" : "")}>{children}</main>
+        <main id="main" class={"px-4 py-4 " + (view === "board" ? "flex min-h-0 flex-1 flex-col" : "")}>{children}</main>
         <aside id="drawer" class="fixed inset-y-0 right-0 z-30 w-full max-w-xl overflow-y-auto border-l border-line bg-surface shadow-lift empty:hidden" aria-live="polite"></aside>
         <div id="toast" class="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 empty:hidden" aria-live="polite"></div>
         <dialog id="viewer" class="m-auto bg-transparent p-0 backdrop:bg-night/85" onclick="this.close()" aria-label="Photo">

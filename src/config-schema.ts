@@ -3,7 +3,9 @@
 export type ColumnConfig = { key: string; label: string; wip_limit?: number | null; is_done?: boolean };
 export type BoardConfig = { key: string; name: string; columns: ColumnConfig[] };
 export type TagConfig = { name: string; role: string };
-export type CustomField = { key: string; label: string; type: "text" | "number" | "date" | "select"; options?: string[] };
+export type CustomField = { key: string; label: string; type: FieldType; options?: string[]; on_card?: boolean };
+export type FieldType = "text" | "number" | "money" | "phone" | "date" | "select";
+const FIELD_TYPES: FieldType[] = ["text", "number", "money", "phone", "date", "select"];
 export type Config = {
   business: string;
   vocabulary: { item: { one: string; many: string } };
@@ -13,6 +15,7 @@ export type Config = {
   default_view: "board" | "list";
   archive_done_after_days: number;
   time_zone: string;
+  currency?: string;
 };
 
 const KEY = /^[a-z0-9][a-z0-9_-]{0,39}$/;
@@ -61,15 +64,16 @@ export function validate(raw: unknown): string[] {
   else c.card.custom.forEach((f, i) => {
     if (!KEY.test(f?.key ?? "")) out.push(`card.custom[${i}].key must match ${KEY}`);
     if (!f?.label) out.push(`card.custom[${i}].label is missing`);
-    if (!["text", "number", "date", "select"].includes(f?.type)) out.push(`card.custom[${i}].type must be text, number, date or select`);
+    if (!FIELD_TYPES.includes(f?.type)) out.push(`card.custom[${i}].type must be one of ${FIELD_TYPES.join(", ")}`);
+    if (f?.on_card !== undefined && typeof f.on_card !== "boolean") out.push(`card.custom[${i}].on_card must be true or false`);
     if (f?.type === "select" && (!Array.isArray(f.options) || f.options.length === 0)) out.push(`card.custom[${i}] is a select with no options`);
   });
   if (c.default_view !== "board" && c.default_view !== "list") out.push("default_view must be board or list");
   if (!Number.isInteger(c.archive_done_after_days) || (c.archive_done_after_days as number) < 0) out.push("archive_done_after_days must be a whole number (0 turns the suggestion off)");
   if (typeof c.time_zone !== "string" || !validTimeZone(c.time_zone)) out.push(`time_zone must be an IANA zone name such as "America/Chicago" or "UTC" (got ${JSON.stringify(c.time_zone)})`);
+  if (c.currency !== undefined && !/^[A-Z]{3}$/.test(String(c.currency))) out.push(`currency must be an ISO code such as "USD" or "EUR" (got ${JSON.stringify(c.currency)})`);
   return out;
 }
-
 
 export function validTimeZone(tz: string): boolean {
   try {

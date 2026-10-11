@@ -1,12 +1,13 @@
 // The board: a filter bar, one column per status, a card per item. The whole
 // thing is one server-rendered partial (#board) that every change swaps back
 // in, so the DOM is never the source of truth for order.
-import { cfg, showsField, tagRole, todayIn } from "../config";
+import { cfg, faceOf, formatMoney, moneyValue, showsField, tagRole, todayIn, totalFields } from "../config";
 import type { Board, BoardItem, Filters, Person, Status } from "../db/queries";
 import { dueState, PRIORITIES, today } from "../db/queries";
 import { vocab } from "./layout";
 import { initials, type NameOf } from "./people";
-import { button, control, menuItem, primary } from "./ui";
+import { Icon } from "./icons";
+import { badge, button, control, ghost, menuItem, primary } from "./ui";
 
 export type BoardData = {
   board: Board; columns: Status[]; items: BoardItem[]; counts: Map<number, number>;
@@ -48,46 +49,53 @@ export function BoardView({ data }: { data: BoardData }) {
       class="flex min-h-0 flex-1 flex-col"
     >
       <FilterBar data={data} />
+      {samples > 0 ? (
+        <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-accent-soft px-3 py-2 text-label text-ink">
+          <input type="hidden" name="return" value={refresh} />
+          <span>The {samples} {samples === 1 ? "card marked example explains" : "cards marked example explain"} the board.</span>
+          <button class="font-semibold text-accent hover:underline">Remove the examples</button>
+        </form>
+      ) : null}
       {/* The board fills the window and each column scrolls on its own, so
           the filters and the column heads stay in view. */}
-      <div class="mt-3 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-4" data-columns>
+      <div class="mt-4 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-4" data-columns>
         {columns.map((col) => {
           const cards = items.filter((i) => i.status_id === col.id);
           const n = counts.get(col.id) ?? 0;
-          const over = col.wip_limit != null && n > col.wip_limit;
+          // Example cards explain the board; they never put a column over its limit.
+          const examples = cards.filter((i) => i.is_sample).length;
+          const over = col.wip_limit != null && n - examples > col.wip_limit;
+          const totals = totalFields.map((f) => cards.reduce((sum, it) => sum + (moneyValue(it.fields[f.key]) ?? 0), 0));
           return (
-            <section class="flex max-h-full w-72 shrink-0 flex-col rounded-card bg-panel" data-status-id={col.id} aria-label={col.label}>
-              <header class="flex items-center gap-2 px-3 pt-2 pb-1">
-                <h2 class="text-label font-semibold">{col.label}</h2>
-                <span class={"text-label " + (over ? "rounded-control bg-warn px-1 text-warn-ink" : "text-ink-3")} title={over ? "Over its limit" : col.wip_limit != null ? `Limit ${col.wip_limit}` : undefined}>
-                  {filtering ? `${cards.length} of ${n}` : `${n}${col.wip_limit != null ? `/${col.wip_limit}` : ""}`}
+            <section class="flex max-h-full min-w-64 max-w-80 flex-1 basis-0 flex-col rounded-card bg-panel" data-status-id={col.id} aria-label={col.label}>
+              <header class="flex items-center gap-2 px-3 pt-3 pb-2">
+                <h2 class="font-semibold">{col.label}</h2>
+                <span class={"rounded-full px-2 text-label font-medium " + (over ? "bg-warn text-warn-ink" : "bg-surface text-ink-2")} title={over ? "Over its limit" : col.wip_limit != null ? `Limit ${col.wip_limit}` : undefined}>
+                  {filtering ? `${cards.length} of ${n}` : `${n}${col.wip_limit != null ? ` / ${col.wip_limit}` : ""}`}
                 </span>
-                {col.is_done ? <svg class="ml-auto size-4 text-ink-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Cards here count as finished"><title>Cards here count as finished</title><path d="M3.5 8.5 6.5 11.5 12.5 5" /></svg> : null}
+                {col.is_done ? <span class="text-ink-3" role="img" aria-label="Cards here count as finished" title="Cards here count as finished"><Icon name="done" /></span> : null}
+                {totals.some((t) => t) ? <span class="ml-auto text-label text-ink-2">{totals.map((t, i) => (totalFields.length > 1 ? `${totalFields[i].label} ` : "") + formatMoney(t)).join(" · ")}</span> : null}
               </header>
-              <ol class="flex min-h-10 flex-col gap-2 overflow-y-auto px-2 pb-2" data-cards data-status-id={col.id}>
+              <ol class="flex min-h-10 flex-col gap-2 overflow-y-auto px-2 pb-1" data-cards data-status-id={col.id}>
                 {cards.map((it) => <Card item={it} columns={columns} refresh={refresh} nameOf={data.nameOf} />)}
                 {cards.length === 0 && filtering ? <li class="px-1 py-2 text-label text-ink-3">Nothing matches here</li> : null}
               </ol>
-              <details class="px-2 pb-2" data-composer={col.id}>
-                <summary class="cursor-pointer list-none rounded-control px-2 py-1 text-label text-ink-2 hover:bg-surface">+ Add {vocab.one.toLowerCase()}</summary>
-                <form method="post" action={`${base}/items`} hx-post={`${base}/items`} hx-target="#board" hx-swap="outerHTML" class="mt-1 flex flex-col gap-1">
+              <details class="group/add px-2 pb-2" data-composer={col.id}>
+                <summary class={"mt-1 w-full cursor-pointer list-none text-label group-open/add:hidden " + ghost}><Icon name="plus" />Add {vocab.one.toLowerCase()}</summary>
+                <form method="post" action={`${base}/items`} hx-post={`${base}/items`} hx-target="#board" hx-swap="outerHTML" class="mt-1 flex flex-col gap-2 rounded-card border border-line bg-surface p-2 shadow-card">
                   <input type="hidden" name="status_id" value={col.id} />
                   <input type="hidden" name="return" value={refresh} />
-                  <input name="title" required maxlength={200} placeholder="Title" class={"w-full " + control} aria-label={`New ${vocab.one.toLowerCase()} title`} />
-                  <button class={"self-start text-label " + primary}>Add</button>
+                  <input name="title" required maxlength={200} placeholder={`New ${vocab.one.toLowerCase()} title`} class="w-full rounded-control px-1 py-1" aria-label={`New ${vocab.one.toLowerCase()} title`} />
+                  <div class="flex items-center gap-2 text-label">
+                    <button class={primary}>Add {vocab.one.toLowerCase()}</button>
+                    <button type="button" class={ghost} onclick="this.closest('details').open = false">Cancel</button>
+                  </div>
                 </form>
               </details>
             </section>
           );
         })}
       </div>
-      {samples > 0 ? (
-        <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-1 text-label text-ink-3">
-          <input type="hidden" name="return" value={refresh} />
-          {samples} example {samples === 1 ? "card explains" : "cards explain"} the board.{" "}
-          <button class="underline">Remove the examples</button>
-        </form>
-      ) : null}
     </div>
   );
 }
@@ -96,41 +104,82 @@ export function filtersActive(f: Filters) {
   return !!(f.q || f.assignee || f.tag || f.due || f.mine || f.priority !== undefined);
 }
 
-export function FilterBar({ data, list = false }: { data: BoardData; list?: boolean }) {
+const LIST_SORTS = [["due_on", "Due date"], ["priority", "Priority"], ["updated_at", "Last updated"], ["created_at", "Oldest first"], ["title", "Title"]];
+
+// The toolbar over the board and the list: search and the filters (one GET
+// form that submits on every change), the Board/List switch and the board's
+// menu. On a phone the search shares the first row with the switch, and the
+// filters scroll sideways under them.
+export function FilterBar({ data, list = false, sort, group }: { data: BoardData; list?: boolean; sort?: string; group?: boolean }) {
   const { board, filters, people, nameOf, user, items } = data;
-  const base = `/b/${board.key}` + (list ? "/list" : "");
+  const root = `/b/${board.key}`;
+  const base = root + (list ? "/list" : "");
   const tagNames = new Set<string>(cfg.tags.map((t) => t.name));
   for (const it of items) for (const t of it.tags) tagNames.add(t);
   const target = list ? "#list" : "#board";
+  const select = "shrink-0 " + control;
+  const toggle = "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 py-1.5 shadow-card hover:bg-canvas has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent";
+  const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");
   return (
-    <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change" class="flex flex-wrap items-center gap-2 text-label">
-      <input type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-48 " + control} aria-label="Search" />
-      <select name="assignee" class={control} aria-label="Assignee">
-        <option value="">Anyone</option>
-        {people.map((p) => <option value={p.email} selected={filters.assignee === p.email}>{nameOf(p.email)}</option>)}
-      </select>
-      <select name="tag" class={control} aria-label="Tag">
-        <option value="">Any tag</option>
-        {[...tagNames].sort().map((t) => <option value={t} selected={filters.tag === t}>{t}</option>)}
-      </select>
-      <select name="due" class={control} aria-label="Due">
-        <option value="">Any date</option>
-        <option value="overdue" selected={filters.due === "overdue"}>Overdue</option>
-        <option value="today" selected={filters.due === "today"}>Due today</option>
-        <option value="week" selected={filters.due === "week"}>Due this week</option>
-        <option value="none" selected={filters.due === "none"}>No date</option>
-      </select>
-      {user ? (
-        <label class="flex items-center gap-1"><input type="checkbox" name="mine" value="1" checked={!!filters.mine} /> Mine</label>
-      ) : null}
-      {list ? (
-        <>
-          <input type="hidden" name="sort" value={(filters as Filters & { sort?: string }).sort ?? ""} />
-        </>
-      ) : null}
-      {filtersActive(filters) ? <a href={base} class="text-ink-2">Clear</a> : null}
-      <noscript><button class={button}>Apply</button></noscript>
-    </form>
+    <div class="flex flex-wrap items-center gap-2 text-label">
+      <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change, search" class="contents">
+        <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
+          <span class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-ink-3"><Icon name="search" /></span>
+          <input type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-full pl-8 " + control} aria-label="Search" />
+        </label>
+        <div class="order-last -mx-4 flex w-[calc(100%+2rem)] min-w-0 items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 sm:pb-0">
+          <select name="assignee" class={select} aria-label="Assignee">
+            <option value="">Anyone</option>
+            {people.map((p) => <option value={p.email} selected={filters.assignee === p.email}>{nameOf(p.email)}</option>)}
+          </select>
+          <select name="tag" class={select} aria-label="Tag">
+            <option value="">Any tag</option>
+            {[...tagNames].sort().map((t) => <option value={t} selected={filters.tag === t}>{t}</option>)}
+          </select>
+          <select name="due" class={select} aria-label="Due">
+            <option value="">Any date</option>
+            <option value="overdue" selected={filters.due === "overdue"}>Overdue</option>
+            <option value="today" selected={filters.due === "today"}>Due today</option>
+            <option value="week" selected={filters.due === "week"}>Due this week</option>
+            <option value="none" selected={filters.due === "none"}>No date</option>
+          </select>
+          {user ? <label class={toggle}><input type="checkbox" name="mine" value="1" checked={!!filters.mine} class="sr-only" />Mine</label> : null}
+          {list ? (
+            <>
+              <select name="sort" class={select} aria-label="Sort">
+                {LIST_SORTS.map(([k, label]) => <option value={k} selected={sort === k}>Sort: {label}</option>)}
+              </select>
+              <label class={toggle}><input type="checkbox" name="group" value="1" checked={!!group} class="sr-only" />Group by column</label>
+            </>
+          ) : null}
+          {filtersActive(filters) ? <a href={base} class={"shrink-0 " + ghost}><Icon name="x" />Clear</a> : null}
+          <noscript><button class={button}>Apply</button></noscript>
+        </div>
+      </form>
+      <div class="flex items-center gap-1 sm:ml-auto">
+        <nav aria-label="View" class="flex rounded-control bg-panel p-0.5">
+          <a href={root} class={tab(!list)} aria-current={!list ? "page" : undefined}>Board</a>
+          <a href={`${root}/list`} class={tab(list)} aria-current={list ? "page" : undefined}>List</a>
+        </nav>
+        <BoardMenu board={board} />
+      </div>
+    </div>
+  );
+}
+
+// What a board has besides its cards: its columns, its archive, its export.
+export function BoardMenu({ board }: { board: Board }) {
+  const root = `/b/${board.key}`;
+  const link = "flex items-center gap-2 no-underline " + menuItem;
+  return (
+    <details class="relative">
+      <summary class={"cursor-pointer list-none px-2 py-1.5 " + ghost} aria-label={`${board.name}: columns, archive, export`} title="Columns, archive, export"><Icon name="more" /></summary>
+      <div class="absolute right-0 z-20 mt-1 flex w-52 flex-col rounded-card border border-line bg-surface p-1 shadow-lift">
+        <a href={`${root}/columns`} class={link}><Icon name="columns" class="size-4 text-ink-3" />Board settings</a>
+        <a href={`${root}/archive`} class={link}><Icon name="archive" class="size-4 text-ink-3" />Archive</a>
+        <a href={`${root}/export.csv`} class={link}><Icon name="download" class="size-4 text-ink-3" />Export CSV</a>
+      </div>
+    </details>
   );
 }
 
@@ -139,15 +188,16 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
   const done = item.checklist.filter((c) => c.done).length;
   const col = columns.find((c) => c.id === item.status_id)!;
   const others = columns.filter((c) => c.id !== item.status_id);
+  const face = faceOf(item);
   return (
-    <li class="group cursor-pointer rounded-card border border-line bg-surface px-3 py-2 shadow-card hover:border-line-strong" data-item-id={item.id} data-status-id={item.status_id} tabindex={0}>
-      {item.cover_id ? <img src={`/files/${item.cover_id}?thumb=1`} alt="" loading="lazy" draggable={false} class="-mx-3 -mt-2 mb-2 block h-32 w-[calc(100%+1.5rem)] max-w-none rounded-t-card bg-panel object-cover" /> : null}
+    <li class="group cursor-pointer rounded-card border border-line bg-surface p-3 shadow-card hover:border-line-strong" data-item-id={item.id} data-status-id={item.status_id} tabindex={0}>
+      {item.cover_id ? <img src={`/files/${item.cover_id}?thumb=1`} alt="" loading="lazy" draggable={false} class="-mx-3 -mt-3 mb-3 block h-32 w-[calc(100%+1.5rem)] max-w-none rounded-t-card bg-panel object-cover" /> : null}
       <div class="flex items-start gap-1">
-        <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="grow no-underline">
+        <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="grow font-medium no-underline">
           {item.title}
         </a>
-        <details class="relative -mr-1 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 open:opacity-100 touch:opacity-100">
-          <summary class="min-h-6 min-w-6 cursor-pointer list-none rounded-control px-1 text-center text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}>···</summary>
+        <details class="relative -mt-0.5 -mr-1.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 open:opacity-100 touch:opacity-100">
+          <summary class="flex size-6 cursor-pointer list-none items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}><Icon name="more" /></summary>
           <div class="absolute right-0 z-20 mt-1 flex w-48 flex-col rounded-card border border-line bg-surface p-1 text-label shadow-lift">
             {others.map((c) => (
               <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
@@ -156,6 +206,7 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
                 <button class={menuItem}>Move to {c.label}</button>
               </form>
             ))}
+            <div class="my-1 border-t border-line"></div>
             <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
               <input type="hidden" name="status_id" value={col.id} />
               <input type="hidden" name="direction" value="up" />
@@ -175,29 +226,39 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
           </div>
         </details>
       </div>
-      <div class="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-label empty:hidden">
-        {showsField("priority") ? <PriorityBadge priority={item.priority} /> : null}
+      {face.length ? <p class="mt-1 text-label text-ink-3">{face.join(" · ")}</p> : null}
+      <div class="mt-3 flex flex-wrap items-center gap-1.5 text-label empty:hidden">
         {showsField("due_on") && item.due_on ? <DueBadge due={item.due_on} state={due} /> : null}
-        {showsField("tags") ? item.tags.map((t) => <span class={`rounded-full px-2 bg-${tagRole(t)} text-ink`}>{t}</span>) : null}
-        {showsField("checklist") && item.checklist.length ? <span class="inline-flex items-center gap-0.5 text-ink-3" title="Checklist"><svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2" /><path d="M5.5 8.25 7.25 10 10.5 6.5" /></svg>{done}/{item.checklist.length}</span> : null}
-        {item.file_count ? <span class="inline-flex items-center gap-0.5 text-ink-3" title="Photos and files"><svg class="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 7.5-5.3 5.3a3.2 3.2 0 0 1-4.5-4.5l5.6-5.6a2.1 2.1 0 0 1 3 3l-5.6 5.6a1.1 1.1 0 0 1-1.5-1.5L10.5 4.5" /></svg>{item.file_count}</span> : null}
-        {item.is_sample ? <span class="text-ink-3">example</span> : null}
-        {showsField("assignee") && item.assignee ? <span class="ml-auto inline-flex size-6 items-center justify-center rounded-full bg-panel font-semibold text-ink-2" title={nameOf(item.assignee)} aria-label={`Assigned to ${nameOf(item.assignee)}`}>{initials(nameOf(item.assignee))}</span> : null}
+        {showsField("priority") ? <PriorityBadge priority={item.priority} /> : null}
+        {showsField("tags") ? item.tags.map((t) => <TagBadge tag={t} />) : null}
+        {showsField("checklist") && item.checklist.length ? <span class="inline-flex items-center gap-1 text-ink-3" title="Checklist"><Icon name="check" class="size-3.5" />{done}/{item.checklist.length}</span> : null}
+        {item.file_count ? <span class="inline-flex items-center gap-1 text-ink-3" title="Photos and files"><Icon name="clip" class="size-3.5" />{item.file_count}</span> : null}
+        {item.is_sample ? <span class={"bg-accent-soft text-accent " + badge}>example</span> : null}
+        {showsField("assignee") && item.assignee ? <Avatar name={nameOf(item.assignee)} class="ml-auto" /> : null}
       </div>
     </li>
   );
 }
 
-// Priority is outlined, so it never reads as a date: dates are the filled badges.
+export function Avatar({ name, class: cls = "" }: { name: string; class?: string }) {
+  return <span class={"inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-panel text-label font-semibold text-ink-2 " + cls} title={name} role="img" aria-label={name}>{initials(name)}</span>;
+}
+
+export function TagBadge({ tag }: { tag: string }) {
+  return <span class={`bg-${tagRole(tag)} text-ink ` + badge}>{tag}</span>;
+}
+
+// Priority is a flag and a word with no ground, so it never reads as a date:
+// dates are the filled badges.
 export function PriorityBadge({ priority }: { priority: number }) {
   if (!priority) return null;
-  return <span class={"rounded-control border px-1.5 " + (priority === 2 ? "border-late text-late" : "border-line-strong text-ink-2")}>{PRIORITIES[priority]}</span>;
+  return <span class={"inline-flex items-center gap-1 font-medium " + (priority === 2 ? "text-late" : "text-ink-2")}><Icon name="flag" class="size-3.5" />{PRIORITIES[priority]}</span>;
 }
 
 export function DueBadge({ due, state }: { due: string; state: ReturnType<typeof dueState> }) {
-  const cls = state === "overdue" ? "rounded-control px-1.5 bg-late text-late-ink" : state === "today" || state === "soon" ? "rounded-control px-1.5 bg-warn text-warn-ink" : "text-ink-3";
-  const label = state === "overdue" ? "Overdue" : state === "today" ? "Today" : formatDate(due);
-  return <span class={cls} title={`Due ${due}`}>{label}</span>;
+  const tone = state === "overdue" ? "bg-late-soft text-late" : state === "today" || state === "soon" ? "bg-warn text-warn-ink" : "bg-canvas text-ink-2";
+  const label = state === "overdue" ? `Overdue, ${formatDate(due)}` : state === "today" ? "Today" : formatDate(due);
+  return <span class={tone + " " + badge} title={`Due ${due}`}><Icon name="calendar" class="size-3.5" />{label}</span>;
 }
 
 export function formatDate(d: string) {
