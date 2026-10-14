@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The development loop in one process: Tailwind rebuilding static/board.css
-// on every change and the server restarting when src/ or the config
-// changes. This is what the `web` service runs on a Task & Tool machine, so
+// on every change and the server restarting when src/, board.config.json,
+// migrations/ or styles/ changes. This is what the `web` service runs on a Task & Tool machine, so
 // an edit is live on refresh.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";

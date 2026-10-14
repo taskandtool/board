@@ -53,7 +53,7 @@ contractor, a real estate office, a recruiter. Ask the AI to shape the
 board for your business and it reads them, asks what it cannot infer, and
 sets the config; or edit it yourself and restart.
 
-After the first run, columns are rows, edited on the Edit columns page or
+After the first run, columns are rows, edited on the Board settings page or
 with `scripts/board.mjs`. A field that deserves a real column is a numbered,
 additive SQL file in `migrations/`. Table names never change; what you
 call things does.
@@ -72,7 +72,7 @@ call things does.
   can change it; once it is published to anyone, that means anyone with
   the link.
 - Anywhere else: `npm install`, put `DATABASE_URL` (any Postgres) and
-  `BOARD_USER=<your email>` in `.env`, then `npm run dev` and open
+  `BOARD_USER=<your email>` in the environment, then `npm run dev` and open
   `localhost:3000`. `npm run check` and `npm test` are the checks; the
   database tests run when `TEST_DATABASE_URL` is set.
 

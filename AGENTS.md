@@ -17,14 +17,8 @@ adding a table or a migration.
 
 ## Commands
 
-Each takes `--help` (or `-h`); `items.mjs` and `board.mjs` also take
-`--json`. A change prints `<script> <command>: <what happened, to which
-card>`, then `Next:` with the command to look at it. An error says what was
-wrong on stderr with a `Try:` line (exit 2 when misused, 1 when it failed).
-With more than one board, `add`, `archive-done`, `import` and `export` need
-`--board`. Without `--board`, `list`, `find`, `attention` and `summary` cover
-every board, and their `--json` is always `[{ "board": key, "result": ... }]`;
-with `--board`, their `--json` is the result itself.
+Each takes `--help`, which owns the flags and the `--json` shapes. With more
+than one board, `add`, `archive-done`, `import` and `export` need `--board`.
 
 ```bash
 node scripts/items.mjs add "title" [--board key] ...  # "items add: #12 Smith roof on Work, in To do"
@@ -79,8 +73,7 @@ npm run check                                          # "check: ok", or exit 1 
   the refuse list, the typecheck). `npm test` for the tests.
 - `npm run deploy` publishes to production (migrate, build, deploy), after
   the board skill's "Before each deploy".
-- Commit at milestones. Never commit `node_modules/`, `static/vendor/`,
-  `static/board.css`, `dist/`, `build/`, or any credential.
+- Commit at milestones.
 
 ## Rules
 
@@ -98,4 +91,5 @@ npm run check                                          # "check: ok", or exit 1 
 - Real data only. The example cards are marked and removable; never invent
   items, people or history to make the board look busy.
 - The first deploy opens production to the team; making it public is the
-  owner's switch, and a board never needs it.
+  owner's switch, a board never needs it, and a public board is editable by
+  anyone with the link.

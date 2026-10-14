@@ -5,7 +5,7 @@
 // same gap for a few seconds. So the server comes up without a database,
 // says so on one page, watches for the URL, and migrates the moment it
 // appears. Off-platform the file does not exist and the env var is the whole
-// story. This is the only file that knows it runs on Node.
+// story. Node only.
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";

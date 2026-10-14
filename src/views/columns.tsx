@@ -132,7 +132,7 @@ export function WaitingView({ state, error }: { state: string; error: string }) 
         <h1 class="text-title font-semibold">The board is waiting for its database</h1>
         <p class="mt-2 max-w-xl text-ink-2">
           {state === "no-url"
-            ? "DATABASE_URL is not set yet. On Task & Tool the project's Postgres is being set up and this page refreshes on its own; off Task & Tool, put a Postgres connection string in .env (see .env.example)."
+            ? "DATABASE_URL is not set yet. On Task & Tool the project's Postgres is being set up and this page refreshes on its own; off Task & Tool, set DATABASE_URL to a Postgres connection string in the environment and restart."
             : state === "error"
               ? `The database did not answer yet: ${error}. Retrying.`
               : "Connecting and applying migrations."}

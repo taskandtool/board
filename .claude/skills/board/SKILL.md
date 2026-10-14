@@ -5,19 +5,18 @@ description: "Shapes and runs this work board. Use for 'shape this board for my 
 
 # Board
 
-This app is a kanban board on Hono: server-rendered JSX, htmx for the
-round trips, SortableJS for drag, Postgres for the data, no client
-framework. **Dev** is this machine's `web` service; **production** is the
-same app deployed to Cloudflare (below). `AGENTS.md` says where things
-are, lists the scripts and holds the rules every change keeps; this file
-is how to change the board.
+A kanban board on Hono (server-rendered JSX, htmx, SortableJS, Postgres).
+`AGENTS.md` has where things are, the scripts and the rules; this file is
+how to change it.
 
 ## Rules this skill adds
 
 - Every mutation is a POST behind the origin check already there.
 - The board's activity trail is the record; never delete rows from
   `activity`.
-- No polling, websockets or realtime mode in dev (see Cost, below).
+- No polling, websockets or timers in dev: an open tab would hold the
+  machine awake. Production refreshes every 30 s; `BOARD_REFRESH_SECONDS`
+  overrides (`0` off).
 
 ## The three levers
 
@@ -26,11 +25,10 @@ Everything a business wants changed is in one of these.
 1. **`board.config.json`**: the words, the boards and columns seeded on
    first run, tags, card fields, custom fields, the view, the time zone,
    the `business` line. To shape the board or change a key, read
-   [references/shaping.md](references/shaping.md) first. The dev server
-   picks up a change on save.
+   [references/shaping.md](references/shaping.md) first.
 
 2. **Boards and columns are rows** in `boards` and `statuses`. The owner
-   changes them in the column editor (`/b/<key>/columns`); you do the
+   changes them in Board settings (`/b/<key>/columns`); you do the
    same with `node scripts/board.mjs` (`--help` lists every command):
 
    ```bash
@@ -55,15 +53,12 @@ Everything a business wants changed is in one of these.
    create index if not exists items_address on items (address);
    ```
 
-   The dev server applies it on save. Then add the column to
-   `src/db/queries.ts` and the views.
+   Then add the column to `src/db/queries.ts` and the views.
 
 ## Cards from chat
 
 `node scripts/items.mjs` (commands in `AGENTS.md`, everything in
-`--help`). `--as <email>` records who acted; the default actor is `AI`.
-`--status` takes a column key or its label. Dates are `YYYY-MM-DD`. A
-spreadsheet to import: [references/import.md](references/import.md).
+`--help`). A spreadsheet to import: [references/import.md](references/import.md).
 A photo sent in chat goes onto a card with `items.mjs attach`; `show`
 lists a card's files and how to fetch one to look at.
 
@@ -81,8 +76,7 @@ owner adds it from the app's page, or you ask with
 `python3 ~/tools/taskandtool.py request-capability postgres`.
 
 Look at your work before showing it: open the board at
-`localhost:3000/b/<key>`. Set `BOARD_USER=<email>` in the environment only
-if you run a second server by hand, outside the service.
+`localhost:3000/b/<key>`.
 
 ## Before each deploy
 
@@ -99,22 +93,7 @@ production's address; open it and check a board. Code,
 `board.config.json` and migrations wait for a deploy; cards do not, since
 dev and production share one database.
 
-## Cost: no timer in dev
-
-In dev, an open board re-fetches itself only after an edit made in its
-drawer: a timer would hold the machine awake for as long as a tab is open.
-Production and a server outside Task & Tool also refresh every 30 seconds,
-because there it costs nothing. `BOARD_REFRESH_SECONDS` overrides both
-(`0` is off).
-
-## Who is signed in
-
-Dev and production both need a Task & Tool sign-in, unless the owner made
-production public. Both carry the signed-in member's email as
-`X-TaskTool-User`; that header is the board's whole notion of a user
-(assignee, "mine", who did what). It never gates an edit: whoever can open
-the board can change it, so a public production board is editable by anyone
-with the link.
+## A person's name
 
 A person's name on the board is `people.name`, which each person sets from
 their name at the top right; until then it is read from their email

@@ -33,7 +33,7 @@ const ASK_DB = "python3 ~/tools/taskandtool.py request-capability postgres";
 // the schema they make). Any database error ends here, on stderr with a Try.
 export async function withDb<T>(fn: (pool: pg.Pool, applied: string[]) => Promise<T>): Promise<T> {
   const url = databaseUrl();
-  if (!url) fail(`${at}: DATABASE_URL is not set, so this app has no database yet (off Task & Tool, put one in .env)`, ASK_DB);
+  if (!url) fail(`${at}: DATABASE_URL is not set, so this app has no database yet (off Task & Tool, set it in the environment)`, ASK_DB);
   const pool = openPool(url);
   try {
     const applied = await migrate(pool);
