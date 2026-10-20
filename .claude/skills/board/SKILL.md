@@ -6,12 +6,10 @@ description: "Shapes and runs this work board. Use for 'shape this board for my 
 # Board
 
 A kanban board on Hono (server-rendered JSX, htmx, SortableJS, Postgres).
-`AGENTS.md` has where things are, the scripts and the rules; this file is
-how to change it.
 
-## Rules this skill adds
+## Rules
 
-- Every mutation is a POST behind the origin check already there.
+- Every change is a POST behind the origin check already there.
 - The board's activity trail is the record; never delete rows from
   `activity`.
 - No polling, websockets or timers in dev: an open tab would hold the
@@ -39,7 +37,7 @@ Everything a business wants changed is in one of these.
    node scripts/board.mjs words candidates "Candidate"  # what a card on it is called
    ```
 
-   A column that still holds cards cannot be removed; move them first.
+   A column is removed only once its cards are moved out.
    `wip_limit` is a soft limit: the column shows it is over, and refuses
    nothing.
 
@@ -53,7 +51,8 @@ Everything a business wants changed is in one of these.
    create index if not exists items_address on items (address);
    ```
 
-   Then add the column to `src/db/queries.ts` and the views.
+   Then add the column to `src/db/queries.ts` and the views. Dev applies
+   the file when it restarts, on the database production shares.
 
 ## Cards from chat
 
@@ -80,21 +79,18 @@ Look at your work before showing it: open the board at
 
 ## Before each deploy
 
-The team works on the board in production. The platform's `deploy` skill
-says what production is; this is the board's part.
+The team works on the board in production, on the database dev shares.
 
-1. Open the board in dev and look at what changed: a board, a card's
+1. `npm run check` and `npm test` pass.
+2. Open the board in dev and look at what changed: a board, a card's
    drawer, the list view.
-2. A new migration runs against the one database the moment you deploy,
-   so dev and production must both work with it.
+3. A migration is already on the shared database once dev restarted, so
+   production's current code must work with it until the deploy.
 
-Then `npm run deploy`: it migrates, builds, and deploys. It prints
-production's address; open it and check a board. Code,
-`board.config.json` and migrations wait for a deploy; cards do not, since
-dev and production share one database.
+Then `npm run deploy`: it prints production's address; open it and check a
+board. Code and `board.config.json` wait for a deploy; cards and
+migrations do not.
 
-## A person's name
-
-A person's name on the board is `people.name`, which each person sets from
-their name at the top right; until then it is read from their email
-(`maria.lopez@` shows as Maria Lopez).
+A person's name on the board is `people.name`, which each person sets at
+the top right; until then it comes from their email (`maria.lopez@` shows
+as Maria Lopez).

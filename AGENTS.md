@@ -47,7 +47,7 @@ npm run check                                          # "check: ok", or exit 1 
   the business's time zone.
   `examples/` holds three worked configs (JSON) to read, not a switch.
 - `migrations/` is the schema as numbered SQL files, applied once each at
-  service start.
+  service start (dev's included, on the database production shares).
 - `src/db/queries.ts` is every query the board runs, named. Routes,
   scripts and tests all go through it.
 - `src/app.tsx` is the Hono app: identity, the routes.
@@ -58,9 +58,8 @@ npm run check                                          # "check: ok", or exit 1 
 - `styles/theme.css` is the design as tokens; `DESIGN.md` explains them.
   `static/` is served as-is (the built CSS, the vendored htmx and
   SortableJS, `board.js`).
-- `test/` runs with `npm test`, which prints a dot per test and then the
-  counts (tests, pass, fail, skipped) and any failure in full; the database
-  tests need `TEST_DATABASE_URL` and skip without it.
+- `test/` runs with `npm test`; the database tests need
+  `TEST_DATABASE_URL` and skip without it.
 
 ## The loop
 
@@ -71,16 +70,17 @@ npm run check                                          # "check: ok", or exit 1 
   (it is safe to run again).
 - `npm run check` before showing work (config valid, migrations numbered,
   the refuse list, the typecheck). `npm test` for the tests.
-- `npm run deploy` publishes to production (migrate, build, deploy), after
-  the board skill's "Before each deploy".
+- `npm run deploy` publishes to production, after the board skill's
+  "Before each deploy".
 - Commit at milestones.
 
 ## Rules
 
 - The customer's words for things live in `board.config.json`; the tables
-  stay `boards`, `statuses`, `items`, `item_files`, `activity`, `people`. A new field is
-  a new numbered migration, never an edit to an old one; the rest of the
-  table rules are the `data` skill's.
+  stay `boards`, `statuses`, `items`, `item_files`, `activity`, `people`. A
+  new column is a new numbered migration, never an edit to an old one (an
+  applied file never runs again); the rest of the table rules are the
+  `data` skill's.
 - Identity comes from the platform. Task & Tool sets `X-TaskTool-User` from
   a signed-in team member; the board builds no login. Identity names who did
   what; it never gates an edit. Whoever can open the board can change it, and

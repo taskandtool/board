@@ -18,8 +18,9 @@ that, and only when the column is empty.
   A board with other work names its own: `"item": { "one": "Candidate",
   "many": "Candidates" }` on that board seeds it, and after the first run
   `board.mjs words <board-key> "Candidate"` (or Board settings) changes it.
-- `boards[]` are the boards and their `columns[]` seeded on the first run:
-  `{ key, label, wip_limit, is_done }`. Keys are slugs and never change;
+- `boards[]` are the boards seeded on the first run, `{ key, name,
+  columns, item? }`, each column `{ key, label, wip_limit, is_done }`.
+  Keys are slugs and never change;
   labels are free. Every board needs one `is_done` column. After the first
   run, boards and columns are rows; this list only seeds a board that does
   not exist yet.
@@ -35,12 +36,15 @@ that, and only when the column is empty.
   scripts (`--field crew=North`). `"on_card": true` puts one on the card
   face and in the list, after the customer: pick the one or two a person
   scans for (an address, a quote). A `money` field on the face totals
-  each column; `currency` (ISO code, default `USD`) sets its symbol. A
+  each column; the top-level `currency` (ISO code, default `USD`) sets its
+  symbol. A
   `phone` field gets a Call link.
-- `default_view` (`board` or `list`) and `archive_done_after_days`.
+- `default_view` (`board` or `list`) and `archive_done_after_days` (when
+  finished cards are suggested for archiving; `0` turns that off).
 - `time_zone`, an IANA name (`America/Chicago`). Due dates are dates, not
   instants, so "overdue" and "due today" are judged in this zone; it ships
   as `UTC`, and setting it is part of shaping. The machine's clock never
   decides.
 - `business` is one line about the business. It ships as `to fill`;
-  writing the real line also retires the "Shape this board" suggestion.
+  writing the real line also retires the "Set up the board for my
+  business" suggestion.
