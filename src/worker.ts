@@ -3,12 +3,15 @@
 // reaches the app. Each request opens its own small pool on the
 // DATABASE_URL binding and closes it after the response. Bundled by
 // `npm run build` to build/worker.mjs; `pg` runs here through nodejs_compat.
+// The routing Worker hands each request the app's connections
+// (`ctx.props.tt`), which app code reads as `TT` (data/gateway.ts).
 import type { ExecutionContext } from "hono";
 import app from "./app";
 import { openPool } from "./db/pool";
 import type { Runtime } from "./runtime";
 
 type Bindings = { DATABASE_URL?: string; BOARD_REFRESH_SECONDS?: string };
+type Context = ExecutionContext & { props?: { tt?: unknown } };
 
 function runtime(env: Bindings): Runtime {
   const refresh = env.BOARD_REFRESH_SECONDS;
@@ -25,7 +28,7 @@ function runtime(env: Bindings): Runtime {
 }
 
 export default {
-  fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
-    return app.fetch(request, { runtime: runtime(env) }, ctx);
+  fetch(request: Request, env: Bindings, ctx: Context) {
+    return app.fetch(request, { TT: ctx.props?.tt, runtime: runtime(env) }, ctx);
   },
 };
