@@ -118,7 +118,7 @@ export async function createStatus(q: Q, boardId: number, label: string, opts: {
   const key = opts.key ?? slugify(label);
   if (!KEY.test(key)) throw new Error(`column key ${key} must be lowercase letters, digits, - or _`);
   const cols = await statuses(q, boardId);
-  // A done column stays at the end: a new working column lands before the
+  // A done column stays at the end: a new working column goes before the
   // trailing run of done columns; a new done column joins the end.
   let at = cols.length;
   if (!opts.is_done) while (at > 0 && cols[at - 1].is_done) at--;

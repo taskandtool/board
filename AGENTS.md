@@ -87,7 +87,9 @@ npm run check                                          # "check: ok", or exit 1 
   who can open it is the app's publishing setting on Task & Tool.
 - Colours and sizes are tokens in `styles/theme.css`. Markup never carries
   a hex value or a Tailwind default colour; `npm run check` refuses both.
-  No em dashes in interface copy.
+- Any words a person reads (a screen, a card's text, a status update): the
+  `writing` skill; `npm run check` scans every line for the tells of
+  AI-written text.
 - Real data only. The example cards are marked and removable; never invent
   items, people or history to make the board look busy.
 - The first deploy opens production to the team; making it public is the

@@ -60,10 +60,12 @@ for (const file of walk("src").filter((f) => f.endsWith(".tsx") && !isTest(f))) 
     const m = src.match(rx);
     if (m) findings.push(`${file}: "${m[0]}" is ${why}`);
   }
-  src.split("\n").forEach((line, i) => {
-    if (line.includes("—")) findings.push(`${file}:${i + 1}: an em dash in interface copy; write a comma, a colon, or a new sentence`);
-  });
 }
+
+// every line of the code, its comments and copy, and the skills: no tells of AI-written text
+const scan = spawnSync("node", [".claude/skills/tropes/tropes.mjs", "--scan", "--json", "src", "scripts", "test", "examples", ".claude", "AGENTS.md"], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+if (scan.status === 2 || !scan.stdout) findings.push("the words could not be scanned:\n" + (scan.stderr || "").trim());
+else for (const f of JSON.parse(scan.stdout)) findings.push(`${f.file}:${f.line}: ${f.rule} "${f.match}": ${f.fix}`);
 
 // production runs the same app on Cloudflare: Node built-ins only in the
 // files that run in dev alone

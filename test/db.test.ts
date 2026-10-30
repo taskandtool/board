@@ -14,7 +14,7 @@ if (!url) {
 } else {
   const schema = "board_test_" + Date.now().toString(36);
   // The scratch schema rides on the connection itself (options=-c search_path),
-  // so no query can slip through before a per-connection SET lands.
+  // so no query can slip through before a per-connection SET takes effect.
   const withSchema = (u: string, s: string) => u + (u.includes("?") ? "&" : "?") + "options=" + encodeURIComponent(`-c search_path=${s}`);
   const pool = new pg.Pool({ connectionString: withSchema(url, schema), max: 2 });
   const admin = new pg.Pool({ connectionString: url, max: 1 });
@@ -123,7 +123,7 @@ if (!url) {
     assert.equal((await Q.item(pool, x.id))!.completed_at, null);
   });
 
-  test("a column holding cards cannot be removed; a new column lands before Done", async (t) => {
+  test("a column holding cards cannot be removed; a new column goes before Done", async (t) => {
     if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const cols = await Q.statuses(pool, board.id);
@@ -188,7 +188,7 @@ if (!url) {
     assert.equal(await Q.sampleCount(pool, board.id), 0);
   });
 
-  test("a new working column lands before two trailing done columns; a new done column joins the end", async (t) => {
+  test("a new working column goes before two trailing done columns; a new done column joins the end", async (t) => {
     if (!(await scratch(t))) return;
     const b = await Q.createBoard(pool, "Jobs", "jobs");
     const cols = await Q.statuses(pool, b.id);
