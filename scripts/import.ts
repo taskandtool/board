@@ -115,7 +115,7 @@ await withDb(async (pool) => {
       await Q.createItem(client, board.id, { title: p.title, status_id: p.status.id, assignee: p.assignee, due_on: p.due_on, priority: p.priority, tags: p.tags, notes: p.notes, customer_ref: p.customer_ref, fields: p.fields }, who());
     }
     await client.query("commit");
-    done("import", `${fresh.length} new card${fresh.length === 1 ? "" : "s"} on ${board.name}, ${kept} already there, left alone`, { lines, next: `node scripts/items.mjs list --board ${board.key}` });
+    done("import", `${fresh.length} new card${fresh.length === 1 ? "" : "s"} on ${board.name}, ${kept} already there, left alone`, { lines, next: `node scripts/cards.mjs list --board ${board.key}` });
   } catch (e) {
     await client.query("rollback").catch(() => {});
     throw e;

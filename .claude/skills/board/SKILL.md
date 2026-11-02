@@ -56,9 +56,9 @@ Everything a business wants changed is in one of these.
 
 ## Cards from chat
 
-`node scripts/items.mjs` (commands in `AGENTS.md`, everything in
+`node scripts/cards.mjs` (commands in `AGENTS.md`, everything in
 `--help`). A spreadsheet to import: [references/import.md](references/import.md).
-A photo sent in chat goes onto a card with `items.mjs attach`; `show`
+A photo sent in chat goes onto a card with `cards.mjs attach`; `show`
 lists a card's files and how to fetch one to look at.
 
 ## Dev, on this machine
@@ -72,7 +72,7 @@ The server comes up without a database and shows one page saying so; it
 watches `/home/sprite/.env` for `DATABASE_URL` and migrates the moment it
 appears. If `/healthz` stays 503, the project has no Postgres yet: the
 owner adds it from the app's page, or you ask with
-`python3 ~/tools/taskandtool.py request-capability postgres`.
+`python3 ~/tools/taskandtool.py request-database`.
 
 Look at your work before showing it: open the board at
 `localhost:3000/b/<key>`.

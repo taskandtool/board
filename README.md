@@ -37,7 +37,7 @@ runs anywhere with Node 20 and a Postgres.
   Cloudflare, your own server); in dev on a Task & Tool machine the board
   refreshes after your own edits only, so an open tab never keeps the
   machine awake.
-- **The AI's hands**: `scripts/items.mjs` and `scripts/board.mjs` add,
+- **The AI's hands**: `scripts/cards.mjs` and `scripts/board.mjs` add,
   move, find and summarise cards from chat, so "add a job for the Smith
   roof, due Friday" is a sentence rather than a form.
 
@@ -84,7 +84,7 @@ migrations/              the schema, numbered SQL, applied once each at start
 src/app.tsx              the Hono app: identity, the routes
 src/db/                  client (pg, the late-database rule), migrate, seed, queries
 src/views/               layout, board, list, item, columns and archive; ui.ts the control classes
-scripts/                 items, board, import, export, migrate (--help), check, dev, vendor
+scripts/                 cards, board, import, export, migrate (--help), check, dev, vendor
 styles/  static/         the tokens and the stylesheet; the built CSS, vendored htmx and SortableJS, board.js
 examples/                contractor, realtor, recruiter configs
 test/                    node:test

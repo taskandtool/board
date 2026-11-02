@@ -20,12 +20,12 @@ test("wrong input is refused before the database, with a Try line", () => {
     ["board", ["column", "rename"], /Try: node scripts\/board\.mjs columns --board <key>/],
     ["board", ["rename", "work"], /needs a board key and the new name/],
     ["board", ["column", "limit", "doing", "abc"], /whole number or none/],
-    ["items", ["list", "--stale", "abc"], /--stale abc is not a number of days/],
-    ["items", ["archive-done", "--older", "abc"], /--older abc is not a number of days/],
-    ["items", ["add", "x", "--due", "tomorrow"], /--due tomorrow is not a date/],
-    ["items", ["tag", "5"], /needs \+tag or -tag/],
-    ["items", ["attach", "5"], /needs a file/],
-    ["items", ["attach", "5", "no-such-file.jpg"], /no file at .*no-such-file\.jpg/],
+    ["cards", ["list", "--stale", "abc"], /--stale abc is not a number of days/],
+    ["cards", ["archive-done", "--older", "abc"], /--older abc is not a number of days/],
+    ["cards", ["add", "x", "--due", "tomorrow"], /--due tomorrow is not a date/],
+    ["cards", ["tag", "5"], /needs \+tag or -tag/],
+    ["cards", ["attach", "5"], /needs a file/],
+    ["cards", ["attach", "5", "no-such-file.jpg"], /no file at .*no-such-file\.jpg/],
   ];
   for (const [script, args, err] of cases) {
     const r = run(script, args, NOWHERE);
@@ -36,7 +36,7 @@ test("wrong input is refused before the database, with a Try line", () => {
 });
 
 test("every script: --help and -h print usage; bad input exits 2 with Try on stderr and nothing on stdout", () => {
-  const scripts = ["board", "items", "import", "export", "migrate"];
+  const scripts = ["board", "cards", "import", "export", "migrate"];
   for (const script of scripts) {
     for (const h of ["--help", "-h"]) {
       const r = run(script, [h], NOWHERE);
@@ -46,16 +46,21 @@ test("every script: --help and -h print usage; bad input exits 2 with Try on std
   }
   const bad: [string, string[], RegExp][] = [
     ["board", ["bogus"], /no such command/],
-    ["items", ["bogus"], /no such command/],
+    ["cards", ["bogus"], /no such command/],
     ["board", ["list", "--bogus"], /unknown flag --bogus/],
-    ["items", ["add", "x", "--stauts", "done"], /unknown flag --stauts; valid: --board/],
+    ["cards", ["add", "x", "--stauts", "done"], /unknown flag --stauts; valid: --board/],
     ["import", ["jobs.csv", "--bogus"], /unknown flag --bogus/],
     ["export", ["--bogus"], /unknown flag --bogus/],
     ["migrate", ["--bogus"], /unknown flag --bogus/],
     ["export", ["stray"], /takes no arguments/],
     ["import", ["no-such-file.csv"], /no such file/],
     ["import", [], /name the CSV file/],
-    ["items", ["show", "abc"], /expected a card id/],
+    ["cards", ["show", "abc"], /expected a card id/],
+    // A word past what a command takes is refused, never ignored.
+    ["cards", ["show", "1", "extra"], /cards show: unexpected extra/],
+    ["cards", ["list", "-n", "5"], /cards list: unexpected -n 5/],
+    ["board", ["list", "extra"], /board list: unexpected extra/],
+    ["board", ["column", "remove", "doing", "extra"], /board column remove: unexpected extra/],
   ];
   for (const [script, args, err] of bad) {
     const r = run(script, args, NOWHERE);
@@ -67,9 +72,9 @@ test("every script: --help and -h print usage; bad input exits 2 with Try on std
 });
 
 test("an unreachable database exits 1 with a Try line", () => {
-  const r = run("items", ["list"], NOWHERE);
+  const r = run("cards", ["list"], NOWHERE);
   assert.equal(r.code, 1, r.stderr);
-  assert.match(r.stderr, /cannot reach the database[\s\S]*\n {2}Try: node scripts\/items\.mjs list/);
+  assert.match(r.stderr, /cannot reach the database[\s\S]*\n {2}Try: node scripts\/cards\.mjs list/);
 });
 
 const url = process.env.TEST_DATABASE_URL;
@@ -104,14 +109,14 @@ if (!url) {
     if (why) return t.skip(why);
 
     // The JSON shape follows --board, not how many boards there are.
-    const all = json("items", "list");
+    const all = json("cards", "list");
     assert.equal(all.length, 1);
     assert.equal(all[0].board, "work");
     assert.ok(Array.isArray(all[0].result));
-    const one = json("items", "list", "--board", "work");
+    const one = json("cards", "list", "--board", "work");
     assert.ok(one.length && one.every((i: object) => "title" in i), "with --board, the cards themselves");
     assert.equal(db("board", "add", "Sales", "--key", "sales").code, 0);
-    assert.deepEqual(json("items", "summary").map((x: { board: string }) => x.board), ["work", "sales"]);
+    assert.deepEqual(json("cards", "summary").map((x: { board: string }) => x.board), ["work", "sales"]);
 
     // No column key: nothing removed, nothing renamed.
     assert.equal(db("board", "column", "remove", "--board", "sales").code, 2);
@@ -127,22 +132,22 @@ if (!url) {
     assert.equal(json("board", "list").find((x: { board: { key: string } }) => x.board.key === "sales").board.item_one, null);
 
     // Repeated --tag keeps cards carrying every tag.
-    json("items", "add", "one", "--board", "sales", "--tag", "a");
-    json("items", "add", "both", "--board", "sales", "--tag", "a", "--tag", "b");
-    assert.deepEqual(json("items", "list", "--board", "sales", "--tag", "a", "--tag", "b").map((i: { title: string }) => i.title), ["both"]);
+    json("cards", "add", "one", "--board", "sales", "--tag", "a");
+    json("cards", "add", "both", "--board", "sales", "--tag", "a", "--tag", "b");
+    assert.deepEqual(json("cards", "list", "--board", "sales", "--tag", "a", "--tag", "b").map((i: { title: string }) => i.title), ["both"]);
 
     // A change says what happened to which card, then Next.
-    const card = json("items", "add", "mover", "--board", "sales");
-    const moved = db("items", "move", String(card.id), "doing");
+    const card = json("cards", "add", "mover", "--board", "sales");
+    const moved = db("cards", "move", String(card.id), "doing");
     assert.equal(moved.code, 0, moved.stderr);
-    assert.equal(moved.stdout, `items move: #${card.id} mover, To do → Doing\n\nNext: node scripts/items.mjs show ${card.id}\n`);
+    assert.equal(moved.stdout, `cards move: #${card.id} mover, To do → Doing\n\nNext: node scripts/cards.mjs show ${card.id}\n`);
 
     // Run twice, the second is left alone: a move to the column it is in, a checklist step.
-    const stay = db("items", "move", String(card.id), "doing");
+    const stay = db("cards", "move", String(card.id), "doing");
     assert.match(stay.stdout, /already in Doing, left alone/);
-    db("items", "check", String(card.id), "Order parts");
-    assert.match(db("items", "check", String(card.id), "Order parts").stdout, /"Order parts" is already on the checklist, left alone/);
-    assert.equal(json("items", "show", String(card.id)).item.checklist[0].done, false);
+    db("cards", "check", String(card.id), "Order parts");
+    assert.match(db("cards", "check", String(card.id), "Order parts").stdout, /"Order parts" is already on the checklist, left alone/);
+    assert.equal(json("cards", "show", String(card.id)).item.checklist[0].done, false);
 
     // A rename of a board that is not there points at the list, not at a flag rename refuses.
     const nope = db("board", "rename", "nope", "X");
@@ -162,6 +167,6 @@ if (!url) {
     assert.match(second.stdout, /^import: 0 new cards on Sales, 3 already there, left alone/);
     const xlsx = db("import", "test/fixtures/jobs.xlsx", "--board", "sales");
     assert.match(xlsx.stdout, /^import: 0 new cards on Sales, 3 already there, left alone/, "the same sheet saved as .xlsx");
-    assert.equal(json("items", "find", "Gutter", "--board", "sales").length, 2, "the sheet's two gutter jobs, once each");
+    assert.equal(json("cards", "find", "Gutter", "--board", "sales").length, 2, "the sheet's two gutter jobs, once each");
   });
 }

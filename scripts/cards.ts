@@ -1,18 +1,18 @@
-// The AI's hands on the board. `node scripts/items.mjs --help`.
+// The AI's hands on the board. `node scripts/cards.mjs --help`.
 import { existsSync, readFileSync } from "node:fs";
 import { basename, extname, resolve } from "node:path";
-import { flag, flags, has, usage, misused, fail, out, localTime } from "../src/data/cli.mjs";
+import { flag, flags, has, usage, misused, noMore, fail, out, localTime } from "../src/data/cli.mjs";
 import { args, withDb, who, resolveBoard, boardsFor, resolveStatus, fmtItem, report, at, rerunWith } from "./lib";
 import * as Q from "../src/db/queries";
 import { STALE_DAYS } from "../src/db/queries";
 import { cfg } from "../src/config";
 
-const HELP = `items.mjs: read and change the board's cards from the command line.
+const HELP = `cards.mjs: read and change the board's cards from the command line.
 
-  list [--board key] [--status key] [--assignee email] [--tag t]... [--overdue] [--stale 3d] [--over-limit] [--archived]
-  add "title" [--board key] [--status key] [--due YYYY-MM-DD] [--assignee email] [--priority p] [--tag t]... [--field k=v]... [--notes "text"] [--customer "ref"] [--top]
+  list [--board key] [--status column] [--assignee email] [--tag t]... [--overdue] [--stale 3d] [--over-limit] [--archived]
+  add "title" [--board key] [--status column] [--due YYYY-MM-DD] [--assignee email] [--priority p] [--tag t]... [--field k=v]... [--notes "text"] [--customer "ref"] [--top]
   show <id>
-  move <id> <status-key> [--to-top]
+  move <id> <column> [--to-top]
   edit <id> [--title t] [--due d|none] [--assignee e|none] [--priority p] [--tag t]... [--notes "text"] [--customer "ref"] [--field k=v]...
   tag <id> +tag -tag ...
   note <id> "text"                   a comment on the card
@@ -24,6 +24,7 @@ const HELP = `items.mjs: read and change the board's cards from the command line
   attention [--board key]            what needs attention, and why
   summary [--board key]
 
+  A column is its key or its name (board.mjs list shows both); --status names one.
   --priority is normal, high or urgent (or 0, 1, 2).
   --field takes a custom field from board.config.json: ${cfg.card.custom.map((f) => f.key).join(", ") || "none declared"}.
   --tag on list keeps cards carrying every tag given.
@@ -61,7 +62,10 @@ const a = args(["overdue", "over-limit", "archived", "top", "to-top", "done"]);
 const json = has(a, "json");
 const actor = flag(a, "as") ?? who();
 const [cmd, ...rest] = a._;
-usage(a, cmd, Object.keys(ALLOWED), HELP, "items", ALLOWED);
+usage(a, cmd, Object.keys(ALLOWED), HELP, "cards", ALLOWED);
+// The words each command takes; one past them is a misuse, never ignored.
+const ARITY: Record<string, number> = { list: 0, show: 1, move: 2, edit: 1, archive: 1, restore: 1, "archive-done": 0, attention: 0, summary: 0 };
+if (ARITY[cmd] !== undefined) noMore(rest, ARITY[cmd], at);
 
 // Checked before the database: a wrong value is a misuse, never a quiet default.
 const priority = (() => {
@@ -79,10 +83,10 @@ const fields = (() => {
     const i = kv.indexOf("=");
     const k = i > 0 ? kv.slice(0, i).trim() : "";
     const def = cfg.card.custom.find((x) => x.key === k);
-    if (!def) misused(`${at}: --field ${kv}: no custom field ${k || "(none named)"}; declared: ${cfg.card.custom.map((x) => x.key).join(", ") || "none"}`, "node scripts/items.mjs --help");
+    if (!def) misused(`${at}: --field ${kv}: no custom field ${k || "(none named)"}; declared: ${cfg.card.custom.map((x) => x.key).join(", ") || "none"}`, "node scripts/cards.mjs --help");
     const v = kv.slice(i + 1).trim();
-    if (def.type === "select" && v && !def.options!.includes(v)) misused(`${at}: --field ${k}=${v}: ${k} is one of ${def.options!.join(", ")}`, "node scripts/items.mjs --help");
-    if ((def.type === "number" || def.type === "money") && v && !Number.isFinite(Number(v))) misused(`${at}: --field ${k}=${v}: ${k} is a number; write it without symbols, like ${k}=1250`, "node scripts/items.mjs --help");
+    if (def.type === "select" && v && !def.options!.includes(v)) misused(`${at}: --field ${k}=${v}: ${k} is one of ${def.options!.join(", ")}`, "node scripts/cards.mjs --help");
+    if ((def.type === "number" || def.type === "money") && v && !Number.isFinite(Number(v))) misused(`${at}: --field ${k}=${v}: ${k} is a number; write it without symbols, like ${k}=1250`, "node scripts/cards.mjs --help");
     f[k] = v;
   }
   return f;
@@ -109,7 +113,7 @@ const older = days("older", 14) ?? 14;
 const id = (() => {
   if (!BY_ID.includes(cmd)) return 0;
   const n = Number(rest[0]);
-  if (!Number.isInteger(n) || n <= 0) misused(`${at}: expected a card id, got ${rest[0] ?? "nothing"}`, `node scripts/items.mjs find "words"`);
+  if (!Number.isInteger(n) || n <= 0) misused(`${at}: expected a card id, got ${rest[0] ?? "nothing"}`, `node scripts/cards.mjs find "words"`);
   return n;
 })();
 const text = rest.slice(1).join(" ").trim();
@@ -124,7 +128,7 @@ const needs: Record<string, [boolean, string, string]> = {
   find: [!!rest.join(" ").trim(), "words", `find "roof"`],
 };
 const need = needs[cmd];
-if (need && !need[0]) misused(`${at}: needs ${need[1]}`, `node scripts/items.mjs ${need[2]}`);
+if (need && !need[0]) misused(`${at}: needs ${need[1]}`, `node scripts/cards.mjs ${need[2]}`);
 
 // attach's files, read before the database: a path that is not there is a
 // misuse, and a file over the limit is refused.
@@ -133,7 +137,7 @@ const attaching: Q.NewFile[] = cmd === "attach" ? rest.slice(1).map((p) => {
   const path = resolve(process.env.CALLER_CWD ?? ".", p);
   if (!existsSync(path)) misused(`${at}: no file at ${path}`, `ls ${resolve(path, "..")}`);
   const bytes = readFileSync(path);
-  if (bytes.length > Q.MAX_FILE_BYTES) fail(`${at}: ${basename(path)} is ${Q.formatSize(bytes.length)}; a file can be ${Q.formatSize(Q.MAX_FILE_BYTES)} at most`, `node scripts/items.mjs note ${id} "<where the file is kept>"`);
+  if (bytes.length > Q.MAX_FILE_BYTES) fail(`${at}: ${basename(path)} is ${Q.formatSize(bytes.length)}; a file can be ${Q.formatSize(Q.MAX_FILE_BYTES)} at most`, `node scripts/cards.mjs note ${id} "<where the file is kept>"`);
   return { name: basename(path), content_type: TYPES[extname(path).toLowerCase()] ?? "application/octet-stream", bytes };
 }) : [];
 
@@ -141,10 +145,10 @@ await withDb(async (pool) => {
   // The card the id names and the columns of its own board, or exit 2 naming the id.
   const card = async () => {
     const it = await Q.item(pool, id);
-    if (!it) misused(`${at}: no card ${id}`, `node scripts/items.mjs find "words"`);
+    if (!it) misused(`${at}: no card ${id}`, `node scripts/cards.mjs find "words"`);
     return { it, cols: await Q.statuses(pool, it.board_id, true) };
   };
-  const show = `node scripts/items.mjs show ${id}`;
+  const show = `node scripts/cards.mjs show ${id}`;
   const name = (it: Q.Item) => `#${it.id} ${it.title}`;
   // Read commands cover every board when --board is omitted, grouped by board name.
   // The JSON shape follows the flag, never the number of boards.
@@ -185,7 +189,7 @@ await withDb(async (pool) => {
         title, status_id: status.id, due_on: due, assignee: flag(a, "assignee"), priority: priority ?? 0,
         tags, fields, notes: flag(a, "notes"), customer_ref: flag(a, "customer"), top: has(a, "top"),
       }, actor);
-      report(json, it, `${name(it)} on ${board.name}, in ${status.label}`, { lines: [fmtItem(it, cols)], next: `node scripts/items.mjs show ${it.id}` });
+      report(json, it, `${name(it)} on ${board.name}, in ${status.label}`, { lines: [fmtItem(it, cols)], next: `node scripts/cards.mjs show ${it.id}` });
       break;
     }
     case "show": {
@@ -200,7 +204,7 @@ await withDb(async (pool) => {
     }
     case "move": {
       const { it } = await card();
-      if (it.archived_at) fail(`${at}: ${name(it)} is archived`, `node scripts/items.mjs restore ${it.id}`);
+      if (it.archived_at) fail(`${at}: ${name(it)} is archived`, `node scripts/cards.mjs restore ${it.id}`);
       const b = (await Q.boardById(pool, it.board_id))!;
       const status = await resolveStatus(pool, b, rest[1]);
       // Already there: moving would send it to the bottom of its column.
@@ -287,7 +291,7 @@ await withDb(async (pool) => {
     case "archive-done": {
       const board = await resolveBoard(pool, flag(a, "board"));
       const n = await Q.archiveDone(pool, board.id, older, actor);
-      report(json, { archived: n }, n ? `archived ${n} card${n === 1 ? "" : "s"} on ${board.name} finished more than ${older} days ago` : `no card on ${board.name} finished more than ${older} days ago, nothing archived`, { next: `node scripts/items.mjs list --board ${board.key} --archived` });
+      report(json, { archived: n }, n ? `archived ${n} card${n === 1 ? "" : "s"} on ${board.name} finished more than ${older} days ago` : `no card on ${board.name} finished more than ${older} days ago, nothing archived`, { next: `node scripts/cards.mjs list --board ${board.key} --archived` });
       break;
     }
     case "attention": {

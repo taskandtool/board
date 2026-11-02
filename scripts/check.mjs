@@ -14,6 +14,16 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { parseArgs, plain } from "../src/data/cli.mjs";
+
+plain(parseArgs(process.argv.slice(2)), `usage: npm run check
+
+The board's own checks, before showing work: board.config.json valid,
+migrations numbered without gaps, the refuse list in markup, the tells of
+AI-written text in the code and skills, Node built-ins only where dev alone
+runs them, the files the platform reads, and the typecheck.
+
+Prints "check: ok", or every finding on stderr and exits 1.`, "check", { tryCmd: "npm run check -- --help" });
 
 const findings = [];
 
@@ -87,7 +97,7 @@ const tc = spawnSync("node_modules/.bin/tsc", ["--noEmit", "-p", "."], { encodin
 if (tc.status !== 0) findings.push("typecheck failed:\n" + tc.stdout);
 
 if (findings.length) {
-  console.error("check: " + findings.length + " finding(s)\n  - " + findings.join("\n  - "));
+  console.error("check: " + findings.length + " finding(s)\n  - " + findings.join("\n  - ") + "\n  Try: fix each at its source, then npm run check again");
   process.exit(1);
 }
 console.log("check: ok");

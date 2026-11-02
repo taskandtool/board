@@ -1,5 +1,5 @@
 // Boards and columns from the command line. `node scripts/board.mjs --help`.
-import { flag, has, usage, checkFlags, misused, fail, out } from "../src/data/cli.mjs";
+import { flag, has, usage, checkFlags, misused, noMore, fail, out } from "../src/data/cli.mjs";
 import { args, withDb, resolveBoard, resolveStatus, report, at } from "./lib";
 import * as Q from "../src/db/queries";
 
@@ -24,6 +24,11 @@ const json = has(a, "json");
 const [cmd, ...rest] = a._;
 usage(a, cmd, ["list", "add", "rename", "words", "columns", "column"], HELP, "board", { list: [], add: ["key"], rename: [], words: [], columns: ["board"], column: ["board", "key", "limit", "done"] });
 const COLUMN = ["add", "rename", "limit", "done", "move", "remove"];
+// The words each fixed-length command takes; one past them is a misuse, never ignored.
+const ARITY: Record<string, number> = { list: 0, columns: 0, words: 3 };
+if (ARITY[cmd] !== undefined) noMore(rest, ARITY[cmd], at);
+const COLUMN_ARITY: Record<string, number> = { limit: 2, done: 2, move: 2, remove: 1 };
+if (cmd === "column" && COLUMN_ARITY[rest[0]] !== undefined) noMore(rest.slice(1), COLUMN_ARITY[rest[0]], `${at} ${rest[0]}`);
 
 // Checked before the database: a missing or malformed argument is a misuse,
 // never a guess at the first board or column.
@@ -123,7 +128,7 @@ await withDb(async (pool) => {
           break;
         }
         case "remove":
-          await Q.archiveStatus(pool, s.id).catch((e: Error) => fail(`${where}: ${s.key} on ${b.key}: ${e.message}`, `node scripts/items.mjs list --board ${b.key} --status ${s.key}`));
+          await Q.archiveStatus(pool, s.id).catch((e: Error) => fail(`${where}: ${s.key} on ${b.key}: ${e.message}`, `node scripts/cards.mjs list --board ${b.key} --status ${s.key}`));
           what = `removed ${s.label} (${s.key}) from ${b.name}`;
           break;
       }

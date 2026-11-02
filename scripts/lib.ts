@@ -10,9 +10,9 @@ import { parseArgs, plain as plainUsage, done, fail, misused } from "../src/data
 
 const script = (process.argv[1] ?? "").split("/").pop()?.replace(/\.(ts|mjs)$/, "") ?? "";
 
-// "items move": this script and, for the two with commands, its command. The
+// "cards move": this script and, for the two with commands, its command. The
 // start of every output and error line.
-export const at = ["board", "items"].includes(script) ? [script, parseArgs(process.argv.slice(2))._[0]].filter(Boolean).join(" ") : script;
+export const at = ["board", "cards"].includes(script) ? [script, parseArgs(process.argv.slice(2))._[0]].filter(Boolean).join(" ") : script;
 
 /** The arguments, with `bare` flags never taking the next word: `check 5 --done "Order parts"`. */
 export const args = (bare: readonly string[] = []) => parseArgs(process.argv.slice(2), { bare });
@@ -27,7 +27,7 @@ export function report(json: boolean, data: unknown, what: string, opts: Paramet
   else done(where, what, opts);
 }
 
-const ASK_DB = "python3 ~/tools/taskandtool.py request-capability postgres";
+const ASK_DB = "python3 ~/tools/taskandtool.py request-database";
 
 // The pool, migrated and seeded (both safe to re-run, and every command reads
 // the schema they make). Any database error ends here, on stderr with a Try.

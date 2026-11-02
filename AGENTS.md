@@ -4,8 +4,8 @@ A kanban board for the work this business runs: jobs, listings,
 candidates, client projects, tickets. Columns per board, a card per item,
 drag between columns, a list view, a record of who did what. It runs in
 **dev** on this machine and in **production** on Cloudflare once
-deployed. This repository *is* the app: the code at the root, the one skill that knows
-how to work on it in `.claude/skills/board/`, and `.taskandtool/setup.sh`
+deployed. This repository *is* the app: the code at the root, the skills
+that know how to work on it in `.claude/skills/`, and `.taskandtool/setup.sh`
 for what the machine needs (dependencies, the `web` service). All of it is
 the owner's to change.
 
@@ -21,15 +21,19 @@ Each takes `--help`, which owns the flags and the `--json` shapes. With more
 than one board, `add`, `archive-done`, `import` and `export` need `--board`.
 
 ```bash
-node scripts/items.mjs add "title" [--board key] ...  # "items add: #12 Smith roof on Work, in To do"
-node scripts/items.mjs move <id> <column>             # "items move: #12 Smith roof, To do → Doing"
-node scripts/items.mjs note <id> "text"               # a comment on the card
-node scripts/items.mjs attach <id> <file>...          # "items attach: 2 files onto #12 Smith roof", each named with its size
-node scripts/items.mjs attention                       # what needs attention and why, every board
-node scripts/items.mjs list [--status key] [--tag t]   # cards, grouped by board when there are several
-node scripts/items.mjs find "words"                    # cards matching the words, same grouping
-node scripts/items.mjs summary                         # counts per column, overdue, due this week
-node scripts/items.mjs archive-done --older 14         # archives cards finished more than 14 days ago
+node scripts/cards.mjs add "title" [--board key] ...  # "cards add: #12 Smith roof on Work, in To do"
+node scripts/cards.mjs show <id>                      # the card whole: notes, checklist, files, its history
+node scripts/cards.mjs edit <id> --due 2026-10-20     # title, due, assignee, priority, tags, notes, fields
+node scripts/cards.mjs move <id> <column>             # "cards move: #12 Smith roof, To do → Doing"
+node scripts/cards.mjs note <id> "text"               # a comment on the card
+node scripts/cards.mjs check <id> "step"              # a checklist step (--done ticks it)
+node scripts/cards.mjs attach <id> <file>...          # "cards attach: 2 files onto #12 Smith roof", each named with its size
+node scripts/cards.mjs attention                       # what needs attention and why, every board
+node scripts/cards.mjs list [--status column] [--tag t] # cards, grouped by board when there are several
+node scripts/cards.mjs find "words"                    # cards matching the words, same grouping
+node scripts/cards.mjs summary                         # counts per column, overdue, due this week
+node scripts/cards.mjs archive <id> | restore <id>     # one card off the board, or back
+node scripts/cards.mjs archive-done --older 14         # archives cards finished more than 14 days ago
 node scripts/board.mjs list                            # boards and their columns, with keys
 node scripts/board.mjs words <board-key> "Candidate"   # "board words: candidates: one card is called Candidate, several are Candidates"
 node scripts/import.mjs <file.csv> --dry-run           # the mapping, new and already-there counts, ten rows; nothing written
