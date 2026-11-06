@@ -1,12 +1,9 @@
 # Board
 
-A kanban board for the work a business actually runs: jobs, listings,
-candidates, client projects, tickets. Three columns out of the box (To do,
+A kanban board for jobs, listings, candidates, client projects and tickets. Three columns out of the box (To do,
 Doing, Done), a card per item, drag between columns, a list view, and a
-record of who did what. It works the minute it is installed and is shaped
-for the business afterwards by talking to the app's AI: the words, the
-columns, the fields on a card are one config file, one row or one migration
-away, and the AI knows which.
+record of who did what. It works as soon as it is installed. To change
+its words, columns or card fields, ask the app's AI.
 
 This repository *is* the app. On Task & Tool it is cloned onto the app's
 own machine, served from there, and everything in it is yours. It also
@@ -28,7 +25,7 @@ runs anywhere with Node 20 and a Postgres.
   card menu. Every move can be undone from the toast.
 - **Filter** by search, assignee, tag or due date, or just "mine".
 - **A list view** of the same cards: sorted, grouped by column, exported
-  as CSV. A CSV import for the spreadsheet you use today.
+  and imported as CSV.
 - **Several boards** in one app (jobs on one, candidates on another), each
   calling its cards what that work is called.
 - **Due badges** (overdue, today, soon), an archive with archive-by-age,
@@ -37,9 +34,9 @@ runs anywhere with Node 20 and a Postgres.
   Cloudflare, your own server); in dev on a Task & Tool machine the board
   refreshes after your own edits only, so an open tab never keeps the
   machine awake.
-- **The AI's hands**: `scripts/cards.mjs` and `scripts/board.mjs` add,
-  move, find and summarise cards from chat, so "add a job for the Smith
-  roof, due Friday" is a sentence rather than a form.
+- **Scripts the AI runs**: `scripts/cards.mjs` and `scripts/board.mjs` add,
+  move, find and summarise cards, so you can just ask: "add a job for the Smith
+  roof, due Friday".
 
 ## Shaping it
 

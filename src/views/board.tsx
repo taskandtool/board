@@ -129,7 +129,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
           <span class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-ink-3"><Icon name="search" /></span>
           <input type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-full pl-8 " + control} aria-label="Search" />
         </label>
-        <div class="order-last -mx-4 flex w-[calc(100%+2rem)] min-w-0 items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 sm:pb-0">
+        <div class="relative order-last -mx-4 flex w-[calc(100%+2rem)] min-w-0 items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 sm:pb-0">
           <select name="assignee" class={select} aria-label="Assignee">
             <option value="">Anyone</option>
             {people.map((p) => <option value={p.email} selected={filters.assignee === p.email}>{nameOf(p.email)}</option>)}
