@@ -182,6 +182,22 @@
       e.target.form.requestSubmit();
     }
   });
+  // A card opens at its top, whichever one was open before and how far it was scrolled.
+  body.addEventListener("htmx:afterSwap", (e) => {
+    if (e.detail.target.id === "drawer") e.detail.target.scrollTop = 0;
+  });
+  // A form that saves on its own says when it has.
+  let saidAt;
+  body.addEventListener("htmx:afterRequest", (e) => {
+    const toast = document.getElementById("toast");
+    if (!toast || !e.detail.successful || !e.target.closest("[data-saves]") || e.detail.requestConfig.verb !== "post") return;
+    const saved = document.createElement("div");
+    saved.className = "rounded-card border border-line bg-night px-4 py-2 text-label text-night-ink shadow-lift";
+    saved.textContent = "Saved";
+    toast.replaceChildren(saved);
+    clearTimeout(saidAt);
+    saidAt = setTimeout(() => saved.remove(), 2000);
+  });
   // A change saved from the drawer refreshes the board behind it once the
   // save answers. It hangs on the request itself: by then the drawer may
   // have closed or moved to another card, and an event fired on a form that

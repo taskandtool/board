@@ -31,8 +31,9 @@
     background-position: right 0.5rem center;
     background-size: 0.75rem;
   }
-  /* A select in a card's details shows its chevron only when pointed at. */
-  select[data-field]:not(:hover, :focus) { background-image: none; }
+  /* A select in a card's details shows its chevron only when pointed at,
+     and always on a screen that cannot point. */
+  @media (hover: hover) { select[data-field]:not(:hover, :focus) { background-image: none; } }
   input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
   input[type="checkbox"] { accent-color: var(--color-accent); width: 1rem; height: 1rem; }
   /* A phone zooms into any text box under 16px; hold them there. */

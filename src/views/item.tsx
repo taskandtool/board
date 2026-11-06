@@ -59,8 +59,8 @@ export function ItemView({ data }: { data: ItemData }) {
             Nothing in the form is re-rendered under you: only the trail and
             the header take the answer. A field reads as text until it is
             pointed at, so the card reads as a card, not a form. */}
-        <form method="post" action={url} hx-post={url} hx-trigger="change, submit" hx-sync="this:queue last" hx-swap="none" hx-select-oob="#activity,#item-meta" class="flex flex-col gap-5">
-          <textarea name="title" required maxlength={200} rows={1} class="-mx-2 resize-none rounded-control border border-transparent bg-transparent px-2 py-1 text-title font-semibold field-sizing-content hover:border-line focus:border-line-strong" aria-label="Title" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }">{item.title}</textarea>
+        <form method="post" action={url} hx-post={url} hx-trigger="change, submit" hx-sync="this:queue last" hx-swap="none" hx-select-oob="#activity,#item-meta" data-saves class="flex flex-col gap-5">
+          <textarea name="title" required maxlength={200} rows={1} class="-mx-2 resize-none rounded-control border border-transparent bg-transparent px-2 py-1 text-title font-semibold field-sizing-content hover:border-line focus:border-line-strong touch:border-line" aria-label="Title" onkeydown="if (event.key === 'Enter') { event.preventDefault(); this.blur(); }">{item.title}</textarea>
 
           <dl class="flex flex-col gap-0.5 text-label">
             <Property label="Column">
@@ -96,7 +96,7 @@ export function ItemView({ data }: { data: ItemData }) {
                       <input type="checkbox" name={`tag:${t.name}`} value="1" checked={item.tags.some((x) => x.toLowerCase() === t.name.toLowerCase())} class="sr-only" />{t.name}
                     </label>
                   ))}
-                  <input name="tags" value={item.tags.filter((x) => !cfg.tags.some((t) => t.name.toLowerCase() === x.toLowerCase())).join(", ")} placeholder={cfg.tags.length ? "Other" : "Add tags, comma separated"} aria-label={cfg.tags.length ? "Other tags, comma separated" : "Tags, comma separated"} class="min-w-24 flex-1 rounded-control border border-transparent bg-transparent px-1.5 py-0.5 hover:border-line focus:border-line-strong focus:bg-surface" />
+                  <input name="tags" value={item.tags.filter((x) => !cfg.tags.some((t) => t.name.toLowerCase() === x.toLowerCase())).join(", ")} placeholder={cfg.tags.length ? "Other" : "Add tags, comma separated"} aria-label={cfg.tags.length ? "Other tags, comma separated" : "Tags, comma separated"} class="min-w-24 flex-1 rounded-control border border-transparent bg-transparent px-1.5 py-0.5 hover:border-line focus:border-line-strong focus:bg-surface touch:border-line" />
                 </div>
               </Property>
             ) : null}
@@ -221,7 +221,7 @@ function Checklist({ item }: { item: Item }) {
           </li>
         ))}
       </ol>
-      <form method="post" action={url} hx-post={url} class="group/add -mx-2 flex items-center gap-2 text-label">
+      <form method="post" action={url} hx-post={url} class="group/add -ml-2 flex items-center gap-2 text-label">
         <input type="hidden" name="action" value="add" />
         <label class="flex min-w-0 flex-1 items-center gap-3 rounded-control px-2 text-ink-3 focus-within:bg-canvas hover:bg-canvas has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent">
           <Icon name="plus" />

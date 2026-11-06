@@ -3,8 +3,8 @@
 
 // A text box or select that is always a box: filters, the composer, a comment.
 export const control = "rounded-control border border-line-strong bg-surface px-2.5 py-1.5 shadow-card";
-// A field in a card's details: plain text until it is pointed at or focused.
-export const field = "w-full rounded-control border border-transparent bg-transparent px-2 py-1.5 hover:border-line focus:border-line-strong focus:bg-surface";
+// A field in a card's details: plain text until it is pointed at or focused; a touch screen cannot point, so there it is always a box.
+export const field = "w-full rounded-control border border-transparent bg-transparent px-2 py-1.5 hover:border-line focus:border-line-strong focus:bg-surface touch:border-line";
 export const button = "inline-flex items-center justify-center gap-1.5 rounded-control border border-line-strong bg-surface px-3 py-1.5 font-semibold text-ink shadow-card hover:bg-canvas";
 export const primary = "inline-flex items-center justify-center gap-1.5 rounded-control bg-accent px-3 py-1.5 font-semibold text-accent-ink shadow-card hover:opacity-90";
 // A quiet action: a link that behaves like a button.
