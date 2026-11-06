@@ -67,7 +67,7 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
         </header>
         <main id="main" class={"px-4 py-4 " + (view === "board" ? "flex min-h-0 flex-1 flex-col" : "")}>{children}</main>
         <aside id="drawer" class="fixed inset-y-0 right-0 z-30 w-full max-w-xl overflow-y-auto border-l border-line bg-surface shadow-lift empty:hidden" aria-live="polite"></aside>
-        <div id="toast" class="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 empty:hidden" aria-live="polite"></div>
+        <div id="toast" class="fixed bottom-4 left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 empty:hidden" aria-live="polite"></div>
         <dialog id="viewer" class="m-auto bg-transparent p-0 backdrop:bg-night/85" onclick="this.close()" aria-label="Photo">
           <img class="block max-h-[92dvh] max-w-[92vw] rounded-card object-contain" alt="" />
         </dialog>

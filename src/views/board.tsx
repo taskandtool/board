@@ -281,7 +281,7 @@ export const formatDay = (at: Date) => formatDate(todayIn(cfg.time_zone, new Dat
 
 export function Toast({ message, undo }: { message: string; undo?: { url: string; fields: Record<string, string | number> } }) {
   return (
-    <div id="toast" hx-swap-oob="true" class="fixed bottom-4 left-1/2 z-40 -translate-x-1/2 empty:hidden">
+    <div id="toast" hx-swap-oob="true" class="fixed bottom-4 left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 empty:hidden">
       <div class="flex items-center gap-3 rounded-card border border-line bg-night px-4 py-2 text-label text-night-ink shadow-lift" data-toast>
         <span>{message}</span>
         {undo ? (
