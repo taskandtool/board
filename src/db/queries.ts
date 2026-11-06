@@ -302,7 +302,7 @@ export async function updateItem(q: Q, id: number, patch: ItemPatch, who: string
   // checklist tick) never put back each other's old values.
   const sets = changed.map((k, i) => `${k} = $${i + 2}`).join(", ");
   const values = changed.map((k) => (k === "checklist" ? JSON.stringify(next[k]) : next[k]));
-  const updated = (await q.query<Item>(`update items set ${sets}, updated_at = now(), is_sample = false where id = $1 returning *`, [id, ...values])).rows[0];
+  const updated = (await q.query<Item>(`update items set ${sets}, updated_at = now(), is_sample = ${changed.includes("title") ? "false" : "is_sample"} where id = $1 returning *`, [id, ...values])).rows[0];
   await log(q, id, who, "edited", changed.join(", "));
   return updated;
 }
@@ -372,7 +372,7 @@ async function moveOnce(pool: pg.Pool, id: number, move: Move, who: string | nul
       await client.query("update items set position = $2 where id = $1", [itemId, i]);
     }
     const completed = to.is_done ? (cur.completed_at ?? new Date()) : null;
-    const moved = (await client.query<Item>("update items set status_id = $2, completed_at = $3, updated_at = now(), is_sample = false where id = $1 returning *", [id, to.id, completed])).rows[0];
+    const moved = (await client.query<Item>("update items set status_id = $2, completed_at = $3, updated_at = now() where id = $1 returning *", [id, to.id, completed])).rows[0];
     if (from.id !== to.id) {
       await renumber(client, from.id);
       await log(client, id, who, "moved", null, from.key, to.key);
@@ -422,8 +422,9 @@ export async function archiveDone(q: Q, boardId: number, olderThanDays: number, 
 }
 
 export async function removeSamples(q: Q, boardId: number): Promise<number> {
-  const r = await q.query("delete from items where board_id = $1 and is_sample", [boardId]);
-  return r.rowCount ?? 0;
+  // The count is of what the board showed; an archived example goes too.
+  const r = await q.query<{ archived_at: Date | null }>("delete from items where board_id = $1 and is_sample returning archived_at", [boardId]);
+  return r.rows.filter((i) => !i.archived_at).length;
 }
 
 export async function sampleCount(q: Q, boardId: number): Promise<number> {
