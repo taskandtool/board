@@ -25,7 +25,7 @@ export function refreshTrigger(seconds: number): string {
   return timer + "board-changed from:body";
 }
 
-const filterQuery = (f: Filters) => {
+export const filterQuery = (f: Filters) => {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(f)) if (v !== undefined && v !== "" && v !== null && k !== "mine") p.set(k, String(v));
   if (f.mine) p.set("mine", "1");

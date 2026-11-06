@@ -2,7 +2,7 @@
 import { faceFields, faceOf, showsField, showValue } from "../config";
 import type { Item, Status } from "../db/queries";
 import { dueState } from "../db/queries";
-import { type BoardData, DueBadge, FilterBar, PriorityBadge, TagBadge } from "./board";
+import { type BoardData, DueBadge, FilterBar, filterQuery, filtersActive, PriorityBadge, TagBadge } from "./board";
 import type { NameOf } from "./people";
 import { words } from "./layout";
 
@@ -24,19 +24,25 @@ export function sortItems(items: Item[], sort: Sort): Item[] {
 }
 
 export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; group: boolean }) {
-  const { columns, items } = data;
+  const { board, columns, filters, items } = data;
+  const root = `/b/${board.key}`;
+  const query = new URLSearchParams(filterQuery(filters));
+  if (sort !== "due_on") query.set("sort", sort);
+  if (group) query.set("group", "1");
+  const refresh = `${root}/list${query.size ? "?" + query : ""}`;
+  const vocab = words(board);
   const sorted = sortItems(items, sort);
   const span = 3 + ["assignee", "due_on", "priority", "tags", "customer_ref"].filter(showsField).length + faceFields.length;
   const groups = group ? columns.map((c) => ({ label: c.label, items: sorted.filter((i) => i.status_id === c.id) })).filter((g) => g.items.length) : [{ label: "", items: sorted }];
   const th = "px-3 py-2.5 text-left font-semibold text-ink-2";
   return (
-    <div id="list">
+    <div id="list" data-refresh={refresh} hx-get={refresh} hx-trigger="board-changed from:body" hx-swap="outerHTML">
       <FilterBar data={data} list sort={sort} group={group} />
       <div class="mt-4 overflow-x-auto rounded-card border border-line bg-surface shadow-card">
         <table class="w-full border-collapse">
           <thead class="border-b border-line bg-canvas text-label">
             <tr>
-              <th class={th + " pl-4"}>{words(data.board).one}</th>
+              <th class={th + " pl-4"}>{vocab.one}</th>
               {showsField("customer_ref") ? <th class={wide + " " + th}>Customer</th> : null}
               {faceFields.map((f) => <th class={wide + " " + th + (f.type === "money" ? " text-right" : "")}>{f.label}</th>)}
               <th class={wide + " " + th}>Column</th>
@@ -54,7 +60,15 @@ export function ListView({ data, sort, group }: { data: BoardData; sort: Sort; g
                 {g.items.map((it) => <Row item={it} columns={columns} nameOf={data.nameOf} />)}
               </>
             ))}
-            {items.length === 0 ? <tr><td colspan={span} class="px-4 py-10 text-center text-ink-3">Nothing here yet</td></tr> : null}
+            {items.length === 0 ? (
+              <tr>
+                <td colspan={span} class="px-4 py-10 text-center text-ink-2">
+                  {filtersActive(filters)
+                    ? <>No {vocab.many.toLowerCase()} match. <a href={`${root}/list`} class="font-semibold text-accent no-underline hover:underline">Clear filters</a></>
+                    : <>No {vocab.many.toLowerCase()} yet. <a href={root} class="font-semibold text-accent no-underline hover:underline">Add one on the board</a></>}
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
@@ -70,8 +84,8 @@ function Row({ item, columns, nameOf }: { item: Item; columns: Status[]; nameOf:
   const meta = [...faceOf(item), col?.label, showsField("assignee") && item.assignee ? nameOf(item.assignee) : ""].filter(Boolean).join(" · ");
   return (
     <tr class="cursor-pointer hover:bg-canvas" data-item-id={item.id}>
-      <td class={td + " pl-4"}>
-        <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="font-medium no-underline sm:whitespace-nowrap">{item.title}</a>
+      <td class={td + " pl-4 sm:min-w-64"}>
+        <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="font-medium no-underline">{item.title}</a>
         <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-label text-ink-3 sm:hidden">
           <span>{meta}</span>
           {showsField("priority") ? <PriorityBadge priority={item.priority} /> : null}

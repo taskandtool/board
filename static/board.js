@@ -170,8 +170,8 @@
     const drawer = document.getElementById("drawer");
     if (!drawer || !drawer.firstChild) return;
     emptyDrawer(drawer);
-    const board = document.getElementById("board");
-    if (board && board.dataset.refresh) history.pushState({}, "", board.dataset.refresh);
+    const home = document.getElementById("board") || document.getElementById("list");
+    if (home && home.dataset.refresh) history.pushState({}, "", home.dataset.refresh);
   };
   body.addEventListener("keydown", (e) => {
     // Escape in the photo viewer closes only the viewer.
