@@ -2,7 +2,7 @@
 // thing is one server-rendered partial (#board) that every change swaps back
 // in, so the DOM is never the source of truth for order.
 import { cfg, faceOf, formatMoney, moneyValue, showsField, tagRole, todayIn, totalFields } from "../config";
-import type { Board, BoardItem, Filters, Person, Status } from "../db/queries";
+import type { Board, BoardItem, Filters, Status } from "../db/queries";
 import { dueState, PRIORITIES, today } from "../db/queries";
 import { words } from "./layout";
 import { initials, type NameOf } from "./people";
@@ -11,7 +11,7 @@ import { badge, button, control, ghost, menuItem, primary } from "./ui";
 
 export type BoardData = {
   board: Board; columns: Status[]; items: BoardItem[]; counts: Map<number, number>;
-  filters: Filters; people: Person[]; nameOf: NameOf; samples: number; user: string | null;
+  filters: Filters; assignees: string[]; nameOf: NameOf; samples: number; user: string | null;
   refreshSeconds: number;
 };
 
@@ -112,7 +112,7 @@ const LIST_SORTS = [["due_on", "Due date"], ["priority", "Priority"], ["updated_
 // menu. On a phone the search shares the first row with the switch, and the
 // filters scroll sideways under them.
 export function FilterBar({ data, list = false, sort, group }: { data: BoardData; list?: boolean; sort?: string; group?: boolean }) {
-  const { board, filters, people, nameOf, user, items } = data;
+  const { board, filters, assignees, nameOf, user, items } = data;
   const root = `/b/${board.key}`;
   const base = root + (list ? "/list" : "");
   const tagNames = new Set<string>(cfg.tags.map((t) => t.name));
@@ -132,7 +132,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
         <div class="relative order-last -mx-4 flex w-[calc(100%+2rem)] min-w-0 items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 sm:pb-0">
           <select name="assignee" class={select} aria-label="Assignee">
             <option value="">Anyone</option>
-            {people.map((p) => <option value={p.email} selected={filters.assignee === p.email}>{nameOf(p.email)}</option>)}
+            {assignees.map((who) => <option value={who} selected={filters.assignee === who}>{nameOf(who)}</option>)}
           </select>
           <select name="tag" class={select} aria-label="Tag">
             <option value="">Any tag</option>

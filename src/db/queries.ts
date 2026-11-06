@@ -475,6 +475,14 @@ export async function people(q: Q): Promise<Person[]> {
   return (await q.query<Person>("select * from people where active order by email")).rows;
 }
 
+/** Everyone a card can go to: the people who have opened the app, and whoever has a card, on any board. */
+export async function assignees(q: Q): Promise<string[]> {
+  return (await q.query<{ who: string }>(`
+    select email as who from people where active
+    union select distinct assignee from items where assignee is not null and archived_at is null
+    order by who`)).rows.map((r) => r.who);
+}
+
 export async function setName(q: Q, email: string, name: string | null): Promise<void> {
   await q.query("insert into people (email, name, last_seen_at) values ($1, $2, now()) on conflict (email) do update set name = $2", [email.toLowerCase(), name]);
 }

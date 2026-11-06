@@ -2,7 +2,7 @@
 // activity trail. Rendered into the drawer beside the board (an htmx
 // request) or as its own page at /items/:id (the deep link).
 import { cfg, formatMoney, showsField } from "../config";
-import type { Activity, Board, Item, ItemFile, Person, Status } from "../db/queries";
+import type { Activity, Board, Item, ItemFile, Status } from "../db/queries";
 import { dueState, formatSize, PHOTO_TYPES, PRIORITIES } from "../db/queries";
 import type { Child } from "hono/jsx";
 import { Avatar, formatDay } from "./board";
@@ -18,15 +18,13 @@ import { badge, button, field, ghost, heading, primary } from "./ui";
 const INPUT_TYPES = { text: "text", number: "text", money: "text", phone: "tel", date: "date", select: "text" } as const;
 const moneySymbol = formatMoney(0).replace(/[\d\s.,]/g, "");
 
-export type ItemData = { item: Item; board: Board; columns: Status[]; activity: Activity[]; people: Person[]; nameOf: NameOf; files: ItemFile[]; user: string | null; drawer: boolean };
+export type ItemData = { item: Item; board: Board; columns: Status[]; activity: Activity[]; assignees: string[]; nameOf: NameOf; files: ItemFile[]; user: string | null; drawer: boolean };
 
 export function ItemView({ data }: { data: ItemData }) {
-  const { item, board, columns, activity, people, nameOf, files, user, drawer } = data;
+  const { item, board, columns, activity, assignees: known, nameOf, files, user, drawer } = data;
   const url = `/items/${item.id}`;
   const vocab = words(board);
-  const assignees = [...people.map((p) => p.email)];
-  if (item.assignee && !assignees.includes(item.assignee)) assignees.push(item.assignee);
-  if (user && !assignees.includes(user)) assignees.push(user);
+  const assignees = [...new Set([...known, ...(item.assignee ? [item.assignee] : []), ...(user ? [user] : [])])];
   const details = showsField("customer_ref") || cfg.card.custom.length > 0;
   const iconButton = "inline-flex size-8 items-center justify-center rounded-control text-ink-3 no-underline hover:bg-panel hover:text-ink";
   return (

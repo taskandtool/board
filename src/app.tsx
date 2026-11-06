@@ -105,10 +105,10 @@ function filtersFrom(c: C): Filters {
 
 async function boardData(c: C, board: Board, filters = filtersFrom(c)): Promise<BoardData> {
   const pool = c.var.db;
-  const [columns, items, counts, people, samples] = await Promise.all([
-    Q.statuses(pool, board.id), Q.items(pool, board.id, filters), Q.columnCounts(pool, board.id), Q.people(pool), Q.sampleCount(pool, board.id),
+  const [columns, items, counts, people, assignees, samples] = await Promise.all([
+    Q.statuses(pool, board.id), Q.items(pool, board.id, filters), Q.columnCounts(pool, board.id), Q.people(pool), Q.assignees(pool), Q.sampleCount(pool, board.id),
   ]);
-  return { board, columns, items, counts, filters, people, nameOf: namer(people), samples, user: c.get("user"), refreshSeconds: c.env.runtime.refreshSeconds };
+  return { board, columns, items, counts, filters, assignees, nameOf: namer(people), samples, user: c.get("user"), refreshSeconds: c.env.runtime.refreshSeconds };
 }
 
 // Every mutation from the board answers with the board partial, and a toast
@@ -315,8 +315,8 @@ app.get("/b/:board/archive", async (c) => {
 
 async function itemView(c: C, item: Item, status = 200) {
   const pool = c.var.db;
-  const [board, columns, activity, people, files] = await Promise.all([Q.boardById(pool, item.board_id), Q.statuses(pool, item.board_id, true), Q.activity(pool, item.id), Q.people(pool), Q.files(pool, item.id)]);
-  const data = { item, board: board!, columns: columns.filter((s) => !s.archived_at || s.id === item.status_id), activity, people, nameOf: namer(people), files, user: c.get("user"), drawer: isHx(c) };
+  const [board, columns, activity, people, assignees, files] = await Promise.all([Q.boardById(pool, item.board_id), Q.statuses(pool, item.board_id, true), Q.activity(pool, item.id), Q.people(pool), Q.assignees(pool), Q.files(pool, item.id)]);
+  const data = { item, board: board!, columns: columns.filter((s) => !s.archived_at || s.id === item.status_id), activity, assignees, nameOf: namer(people), files, user: c.get("user"), drawer: isHx(c) };
   if (isHx(c)) return c.html(<ItemView data={data} />, status as 200);
   return c.html(<Layout title={item.title} shell={await shell(c, data.board, "item")}><ItemView data={data} /></Layout>, status as 200);
 }
