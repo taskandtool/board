@@ -219,6 +219,20 @@ export async function activity(q: Q, itemId: number): Promise<Activity[]> {
   return (await q.query<Activity>("select * from activity where item_id = $1 order by at desc, id desc limit 200", [itemId])).rows;
 }
 
+/** Changes a comment's words, its author's only. The card it is on, or null if it is not theirs. */
+export async function editComment(q: Q, id: number, body: string, who: string | null): Promise<number | null> {
+  const text = body.trim().slice(0, 5000);
+  if (!text) return null;
+  const r = await q.query<{ item_id: string }>("update activity set body = $2 where id = $1 and kind = 'comment' and who = $3 returning item_id", [id, text, who]);
+  return r.rows[0] ? Number(r.rows[0].item_id) : null;
+}
+
+/** Deletes a comment, its author's only. The card it was on, or null if it is not theirs. */
+export async function removeComment(q: Q, id: number, who: string | null): Promise<number | null> {
+  const r = await q.query<{ item_id: string }>("delete from activity where id = $1 and kind = 'comment' and who = $2 returning item_id", [id, who]);
+  return r.rows[0] ? Number(r.rows[0].item_id) : null;
+}
+
 async function log(q: Q, itemId: number, who: string | null, kind: string, body: string | null = null, from: string | null = null, to: string | null = null) {
   await q.query("insert into activity (item_id, who, kind, body, from_status, to_status) values ($1, $2, $3, $4, $5, $6)", [itemId, who, kind, body, from, to]);
 }

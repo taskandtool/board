@@ -401,6 +401,19 @@ app.post("/items/:id/comment", async (c) => {
   return itemView(c, (await Q.item(c.var.db, item.id))!);
 });
 
+// A comment is its author's to change or delete; anyone else gets a 404.
+app.post("/comments/:id", async (c) => {
+  const itemId = await Q.editComment(c.var.db, num(c.req.param("id")), str((await c.req.parseBody()).body), c.get("user"));
+  const item = itemId ? await Q.item(c.var.db, itemId) : null;
+  return item ? itemView(c, item) : c.notFound();
+});
+
+app.post("/comments/:id/remove", async (c) => {
+  const itemId = await Q.removeComment(c.var.db, num(c.req.param("id")), c.get("user"));
+  const item = itemId ? await Q.item(c.var.db, itemId) : null;
+  return item ? itemView(c, item) : c.notFound();
+});
+
 app.post("/items/:id/checklist", async (c) => {
   const item = await itemOr404(c);
   if (!item) return c.notFound();

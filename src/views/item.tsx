@@ -158,6 +158,18 @@ export function ItemView({ data }: { data: ItemData }) {
                   <div class="min-w-0 flex-1">
                     <p class="text-label"><span class="font-medium text-ink">{a.who ? nameOf(a.who) : "Someone"}</span> <span class="text-ink-3" title={new Date(a.at).toISOString()}>{ago(a.at)}</span></p>
                     <p class="mt-0.5 whitespace-pre-line text-ink-2">{a.body}</p>
+                    {a.who && a.who === user ? (
+                      <details class="mt-1 text-label">
+                        <summary class="inline-flex cursor-pointer list-none text-ink-3 hover:text-ink">Edit</summary>
+                        <form method="post" action={`/comments/${a.id}`} hx-post={`/comments/${a.id}`} hx-target="#activity" hx-select="#activity" hx-swap="outerHTML" class="mt-2 flex flex-col gap-2">
+                          <textarea name="body" required rows={2} maxlength={5000} class="w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-copy field-sizing-content" aria-label="Your comment">{a.body}</textarea>
+                          <span class="flex items-center gap-2">
+                            <button class={primary}>Save</button>
+                            <button formaction={`/comments/${a.id}/remove`} hx-post={`/comments/${a.id}/remove`} hx-confirm="Delete this comment?" formnovalidate class={ghost}>Delete</button>
+                          </span>
+                        </form>
+                      </details>
+                    ) : null}
                   </div>
                 </li>
               ) : (
