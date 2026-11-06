@@ -57,6 +57,11 @@ export function BoardView({ data }: { data: BoardData }) {
           <button class="font-semibold text-accent hover:underline">Remove the examples</button>
         </form>
       ) : null}
+      {filtering && !items.length ? (
+        <p class="mt-3 rounded-card bg-panel px-3 py-2 text-label">
+          No {vocab.many.toLowerCase()} match. <a href={base} class="font-semibold text-accent no-underline hover:underline">Clear filters</a>
+        </p>
+      ) : null}
       {/* The board fills the window and each column scrolls on its own, so
           the filters and the column heads stay in view. */}
       <div class="mt-4 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-4" data-columns>
@@ -65,7 +70,7 @@ export function BoardView({ data }: { data: BoardData }) {
           const n = counts.get(col.id) ?? 0;
           // Example cards explain the board; they never put a column over its limit.
           const examples = cards.filter((i) => i.is_sample).length;
-          const over = col.wip_limit != null && n - examples > col.wip_limit;
+          const over = !filtering && col.wip_limit != null && n - examples > col.wip_limit;
           const totals = totalFields.map((f) => cards.reduce((sum, it) => sum + (moneyValue(it.fields[f.key]) ?? 0), 0));
           return (
             <section class="flex max-h-full min-w-64 max-w-80 flex-1 basis-0 flex-col rounded-card bg-panel" data-status-id={col.id} aria-label={col.label}>
@@ -79,7 +84,6 @@ export function BoardView({ data }: { data: BoardData }) {
               </header>
               <ol class="flex min-h-10 flex-col gap-2 overflow-y-auto px-2 pb-1" data-cards data-status-id={col.id}>
                 {cards.map((it) => <Card item={it} columns={columns} refresh={refresh} nameOf={data.nameOf} />)}
-                {cards.length === 0 && filtering ? <li class="px-1 py-2 text-label text-ink-3">Nothing matches here</li> : null}
               </ol>
               <details class="group/add px-2 pb-2" data-composer={col.id}>
                 <summary class={"mt-1 w-full cursor-pointer list-none text-label group-open/add:hidden " + ghost}><Icon name="plus" />Add {vocab.one.toLowerCase()}</summary>
@@ -119,26 +123,26 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
   for (const it of items) for (const t of it.tags) tagNames.add(t);
   const target = list ? "#list" : "#board";
   const vocab = words(board);
-  const select = "shrink-0 " + control;
+  const select = (on: boolean) => "shrink-0 " + (on ? control.replace("bg-surface", "bg-accent-soft").replace("border-line-strong", "border-accent") + " text-accent" : control);
   const toggle = "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 py-1.5 shadow-card hover:bg-canvas has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent";
   const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");
   return (
     <div class="flex flex-wrap items-center gap-2 text-label">
-      <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-push-url="true" hx-trigger="submit, change, search" class="contents">
+      <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-replace-url="true" hx-trigger="submit, change, search, input[target.type === 'search'] delay:300ms" class="contents">
         <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
           <span class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-ink-3"><Icon name="search" /></span>
-          <input type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-full pl-8 " + control} aria-label="Search" />
+          <input id="filter-q" type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-full pl-8 " + control} aria-label="Search" />
         </label>
         <div class="relative order-last -mx-4 flex w-[calc(100%+2rem)] min-w-0 items-center gap-2 overflow-x-auto px-4 pb-0.5 sm:order-none sm:mx-0 sm:w-auto sm:overflow-visible sm:px-0 sm:pb-0">
-          <select name="assignee" class={select} aria-label="Assignee">
+          <select name="assignee" class={select(!!filters.assignee)} aria-label="Assignee">
             <option value="">Anyone</option>
             {assignees.map((who) => <option value={who} selected={filters.assignee === who}>{nameOf(who)}</option>)}
           </select>
-          <select name="tag" class={select} aria-label="Tag">
+          <select name="tag" class={select(!!filters.tag)} aria-label="Tag">
             <option value="">Any tag</option>
             {[...tagNames].sort().map((t) => <option value={t} selected={filters.tag === t}>{t}</option>)}
           </select>
-          <select name="due" class={select} aria-label="Due">
+          <select name="due" class={select(!!filters.due)} aria-label="Due">
             <option value="">Any date</option>
             <option value="overdue" selected={filters.due === "overdue"}>Overdue</option>
             <option value="today" selected={filters.due === "today"}>Due today</option>
@@ -148,7 +152,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
           {user ? <label class={toggle}><input type="checkbox" name="mine" value="1" checked={!!filters.mine} class="sr-only" />Mine</label> : null}
           {list ? (
             <>
-              <select name="sort" class={select} aria-label="Sort">
+              <select name="sort" class={select(false)} aria-label="Sort">
                 {LIST_SORTS.map(([k, label]) => <option value={k} selected={sort === k}>Sort: {label}</option>)}
               </select>
               <label class={toggle}><input type="checkbox" name="group" value="1" checked={!!group} class="sr-only" />Group by column</label>
@@ -160,8 +164,8 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
       </form>
       <div class="flex items-center gap-1 sm:ml-auto">
         <nav aria-label="View" class="flex rounded-control bg-panel p-0.5">
-          <a href={root} class={tab(!list)} aria-current={!list ? "page" : undefined}>Board</a>
-          <a href={`${root}/list`} class={tab(list)} aria-current={list ? "page" : undefined}>List</a>
+          <a href={root + filterQuery(filters)} class={tab(!list)} aria-current={!list ? "page" : undefined}>Board</a>
+          <a href={`${root}/list${filterQuery(filters)}`} class={tab(list)} aria-current={list ? "page" : undefined}>List</a>
         </nav>
         <BoardMenu board={board} />
       </div>
