@@ -78,6 +78,12 @@ export async function createBoard(q: Q, name: string, key = slugify(name)): Prom
   return board;
 }
 
+/** Deletes a board and everything on it, archived cards too. Never the only board. */
+export async function deleteBoard(q: Q, boardId: number): Promise<boolean> {
+  const r = await q.query("delete from boards where id = $1 and (select count(*) from boards) > 1", [boardId]);
+  return (r.rowCount ?? 0) > 0;
+}
+
 export async function renameBoard(q: Q, id: number, name: string): Promise<void> {
   await q.query("update boards set name = $2 where id = $1", [id, name]);
 }

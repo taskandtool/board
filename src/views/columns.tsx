@@ -22,7 +22,10 @@ function PageHead({ board, title, children }: { board: Board; title: string; chi
 
 const card = "rounded-card border border-line bg-surface shadow-card";
 
-export function ColumnsView({ board, columns, counts }: { board: Board; columns: Status[]; counts: Map<number, number> }) {
+// Columns: the name, how many it holds, its limit, done, its buttons. The header row and each row share it.
+const COLUMN_GRID = "sm:grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_3.5rem_10rem]";
+
+export function ColumnsView({ board, columns, counts, deletable }: { board: Board; columns: Status[]; counts: Map<number, number>; deletable: boolean }) {
   const base = `/b/${board.key}`;
   // Every row saves when one of its fields changes; the page re-renders in
   // place and keeps the focus where it was (each field has an id). On a
@@ -30,14 +33,13 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
   const vocab = words(board);
   const iconButton = "flex size-8 items-center justify-center rounded-control border border-line-strong bg-surface shadow-card hover:bg-canvas";
   return (
-    <div id="columns" class="mx-auto flex max-w-3xl flex-col gap-6" hx-target="#columns" hx-select="#columns" hx-swap="outerHTML">
+    <div id="columns" data-saves class="mx-auto flex max-w-3xl flex-col gap-6" hx-target="#columns" hx-select="#columns" hx-swap="outerHTML">
       <PageHead board={board} title="Board settings">
-        Columns are the steps each {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once: over it, the column says so and refuses nothing. Cards in a done column count as finished.
+        Columns are the steps each {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once; going over it shows a warning. Cards in a done column count as finished.
       </PageHead>
 
-      {/* A plain post: the new name is in the header's board tabs too, and
-          the words are on every page of the board. */}
-      <form method="post" action={`${base}/settings`} onchange="this.requestSubmit()" class={card + " flex flex-col divide-y divide-line text-label"}>
+      {/* The new name is in the header's board tabs too. */}
+      <form method="post" action={`${base}/settings`} hx-post={`${base}/settings`} hx-trigger="change, submit" hx-select-oob="#board-tabs" class={card + " flex flex-col divide-y divide-line text-label"}>
         <div class="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:gap-4">
           <label for="board-name" class="shrink-0 font-medium sm:w-40">Board name</label>
           <input id="board-name" name="name" value={board.name} required maxlength={60} class={"w-full sm:max-w-xs " + control} />
@@ -56,7 +58,7 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
       </form>
 
       <div class={card + " text-label"}>
-        <div class="hidden grid-cols-[minmax(0,1fr)_4rem_5.5rem_3.5rem_10rem] items-center gap-x-3 rounded-t-card border-b border-line bg-canvas px-4 py-2.5 font-semibold text-ink-2 sm:grid">
+        <div class={"hidden items-center gap-x-3 rounded-t-card border-b border-line bg-canvas px-4 py-2.5 font-semibold text-ink-2 sm:grid " + COLUMN_GRID}>
           <span>Column</span><span>{vocab.many}</span><span>Limit</span><span>Done</span><span></span>
         </div>
         <ul class="divide-y divide-line">
@@ -64,7 +66,7 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
             const held = counts.get(c.id) ?? 0;
             return (
               <li>
-                <form method="post" action={`/columns/${c.id}`} hx-post={`/columns/${c.id}`} hx-trigger="change, submit" hx-sync="this:queue last" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid sm:grid-cols-[minmax(0,1fr)_4rem_5.5rem_3.5rem_10rem]">
+                <form method="post" action={`/columns/${c.id}`} hx-post={`/columns/${c.id}`} hx-trigger="change, submit" hx-sync="this:queue last" class={"flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid " + COLUMN_GRID}>
                   <input id={`col-${c.id}-label`} name="label" value={c.label} required maxlength={40} class={"w-full " + control} aria-label="Column name" />
                   <span class="text-ink-2"><span class="sm:hidden">{vocab.many}: </span>{held}</span>
                   <input id={`col-${c.id}-limit`} type="number" name="wip_limit" value={c.wip_limit ?? ""} min={1} max={999} placeholder="None" class={"w-20 sm:w-full " + control} aria-label="Limit" />
@@ -80,6 +82,7 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
             );
           })}
         </ul>
+        {columns.some((c) => (counts.get(c.id) ?? 0) > 0) ? <p class="border-t border-line px-4 py-2.5 text-ink-3">To remove a column, move its {vocab.many.toLowerCase()} out first.</p> : null}
         <form method="post" action={`${base}/columns`} hx-post={`${base}/columns`} class="flex flex-wrap items-end gap-3 rounded-b-card border-t border-line bg-canvas px-4 py-3">
           <label class="flex min-w-40 flex-1 flex-col gap-1.5"><span class="font-medium">New column</span><input id="new-column" name="label" required maxlength={40} placeholder="Like Waiting on parts" class={control} /></label>
           <label class="flex w-24 flex-col gap-1.5"><span class="font-medium">Limit</span><input type="number" name="wip_limit" min={1} max={999} placeholder="None" class={control} /></label>
@@ -87,11 +90,24 @@ export function ColumnsView({ board, columns, counts }: { board: Board; columns:
           <button class={primary}><Icon name="plus" />Add column</button>
         </form>
       </div>
+
+      {deletable ? (
+        <details class={card + " p-4 text-label"}>
+          <summary class="cursor-pointer font-medium">Delete this board</summary>
+          <form method="post" action={`${base}/delete`} class="mt-3 flex flex-wrap items-end gap-3">
+            <label class="flex min-w-48 flex-1 flex-col gap-1.5">
+              <span>This deletes {board.name} and all its {vocab.many.toLowerCase()} for good, archived ones too. Type the board's name to confirm.</span>
+              <input name="name" required autocomplete="off" pattern={board.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} title={`Type ${board.name}`} class={control} aria-label="The board's name" />
+            </label>
+            <button class={button}>Delete board</button>
+          </form>
+        </details>
+      ) : null}
     </div>
   );
 }
 
-export function ArchiveView({ board, items, columns, archiveAfter }: { board: Board; items: Item[]; columns: Status[]; archiveAfter: number }) {
+export function ArchiveView({ board, items, columns, archiveAfter, archived }: { board: Board; items: Item[]; columns: Status[]; archiveAfter: number; archived: number }) {
   const base = `/b/${board.key}`;
   const vocab = words(board);
   return (
@@ -102,6 +118,7 @@ export function ArchiveView({ board, items, columns, archiveAfter }: { board: Bo
         <input type="number" name="days" value={archiveAfter} min={0} max={3650} class={"w-20 " + control} aria-label="Days" />
         <span>days</span>
         <button class={"sm:ml-auto " + button}><Icon name="archive" />Archive them</button>
+        {Number.isFinite(archived) ? <p role="status" class="w-full text-ink-2">{archived ? `Archived ${archived} ${archived === 1 ? vocab.one.toLowerCase() : vocab.many.toLowerCase()}.` : `Nothing to archive: no finished ${vocab.many.toLowerCase()} are that old.`}</p> : null}
       </form>
       <div class={card}>
         {items.length === 0 ? (

@@ -36,7 +36,7 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
         <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-control focus:bg-accent focus:px-3 focus:py-1 focus:text-accent-ink">Skip to content</a>
         <header class="border-b border-line bg-surface">
           <div class="flex h-14 items-center gap-3 px-4">
-            <nav aria-label="Boards" class="-ml-1 flex min-w-0 items-center gap-1 overflow-x-auto">
+            <nav id="board-tabs" aria-label="Boards" class="-ml-1 flex min-w-0 items-center gap-1 overflow-x-auto">
               {boards.map((b) => (
                 <a href={`/b/${b.key}`} class={"shrink-0 rounded-control px-3 py-1.5 font-medium no-underline " + (board?.id === b.id ? "bg-panel text-ink" : "text-ink-2 hover:bg-panel hover:text-ink")} aria-current={board?.id === b.id ? "page" : undefined}>
                   {b.name}

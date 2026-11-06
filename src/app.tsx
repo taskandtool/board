@@ -161,6 +161,14 @@ app.post("/b/:board/settings", async (c) => {
   return c.redirect(`/b/${board.key}/columns`, 303);
 });
 
+// Deleting a board wants its name typed: it takes every card with it.
+app.post("/b/:board/delete", async (c) => {
+  const board = await boardOr404(c);
+  if (!board) return c.notFound();
+  if (str((await c.req.parseBody()).name).trim() !== board.name || !(await Q.deleteBoard(c.var.db, board.id))) return c.redirect(`/b/${board.key}/columns`, 303);
+  return c.redirect("/", 303);
+});
+
 app.get("/b/:board", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
@@ -213,8 +221,8 @@ export function toCsv(rows: unknown[][]): string {
 app.get("/b/:board/columns", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
-  const [columns, counts] = await Promise.all([Q.statuses(c.var.db, board.id), Q.columnCounts(c.var.db, board.id)]);
-  return c.html(<Layout title={`${board.name} · columns`} shell={await shell(c, board, "columns")}><ColumnsView board={board} columns={columns} counts={counts} /></Layout>);
+  const [columns, counts, boards] = await Promise.all([Q.statuses(c.var.db, board.id), Q.columnCounts(c.var.db, board.id), Q.boards(c.var.db)]);
+  return c.html(<Layout title={`${board.name} · columns`} shell={await shell(c, board, "columns")}><ColumnsView board={board} columns={columns} counts={counts} deletable={boards.length > 1} /></Layout>);
 });
 
 app.post("/b/:board/columns", async (c) => {
@@ -301,16 +309,17 @@ app.post("/b/:board/archive-done", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
   const days = num((await c.req.parseBody()).days);
-  const n = await Q.archiveDone(c.var.db, board.id, Number.isFinite(days) ? days : cfg.archive_done_after_days, c.get("user"));
+  const after = Number.isFinite(days) ? days : cfg.archive_done_after_days;
+  const n = await Q.archiveDone(c.var.db, board.id, after, c.get("user"));
   if (isHx(c)) return boardResponse(c, board, { message: `Archived ${n} finished ${n === 1 ? "card" : "cards"}` });
-  return c.redirect(`/b/${board.key}/archive`, 303);
+  return c.redirect(`/b/${board.key}/archive?archived=${n}&days=${after}`, 303);
 });
 
 app.get("/b/:board/archive", async (c) => {
   const board = await boardOr404(c);
   if (!board) return c.notFound();
   const [items, columns] = await Promise.all([Q.archivedItems(c.var.db, board.id), Q.statuses(c.var.db, board.id, true)]);
-  return c.html(<Layout title={`${board.name} · archive`} shell={await shell(c, board, "archive")}><ArchiveView board={board} items={items} columns={columns} archiveAfter={cfg.archive_done_after_days} /></Layout>);
+  return c.html(<Layout title={`${board.name} · archive`} shell={await shell(c, board, "archive")}><ArchiveView board={board} items={items} columns={columns} archiveAfter={Number.isFinite(num(c.req.query("days"))) ? num(c.req.query("days")) : cfg.archive_done_after_days} archived={num(c.req.query("archived"))} /></Layout>);
 });
 
 async function itemView(c: C, item: Item, status = 200) {
