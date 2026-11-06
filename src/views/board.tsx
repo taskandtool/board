@@ -20,7 +20,7 @@ export type BoardData = {
 // dragged or typed. The timer is the server's call (src/db/client.ts).
 export function refreshTrigger(seconds: number): string {
   const timer = seconds > 0
-    ? `every ${seconds}s [document.visibilityState === 'visible' && !window.boardBusy && !(document.activeElement && document.activeElement.closest('#board form'))], `
+    ? `every ${seconds}s [document.visibilityState === 'visible' && !window.boardBusy && !(document.activeElement && document.activeElement.closest('#board form')) && !document.querySelector('#board details[open]')], `
     : "";
   return timer + "board-changed from:body";
 }
@@ -174,7 +174,7 @@ export function BoardMenu({ board }: { board: Board }) {
   const root = `/b/${board.key}`;
   const link = "flex items-center gap-2 no-underline " + menuItem;
   return (
-    <details class="relative">
+    <details data-menu class="relative">
       <summary class={"cursor-pointer list-none px-2 py-1.5 " + ghost} aria-label={`${board.name}: columns, archive, export`} title="Columns, archive, export"><Icon name="more" /></summary>
       <div class="absolute right-0 z-20 mt-1 flex w-52 flex-col rounded-card border border-line bg-surface p-1 shadow-lift">
         <a href={`${root}/columns`} class={link}><Icon name="columns" class="size-4 text-ink-3" />Board settings</a>
@@ -198,9 +198,9 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
         <a href={`/items/${item.id}`} hx-get={`/items/${item.id}`} hx-target="#drawer" hx-swap="innerHTML" hx-push-url="true" class="grow font-medium no-underline">
           {item.title}
         </a>
-        <details class="relative -mt-0.5 -mr-1.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 open:opacity-100 touch:opacity-100">
+        <details data-menu data-float class="-mt-0.5 -mr-1.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 open:opacity-100 touch:opacity-100">
           <summary class="flex size-6 cursor-pointer list-none items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}><Icon name="more" /></summary>
-          <div class="absolute right-0 z-20 mt-1 flex w-48 flex-col rounded-card border border-line bg-surface p-1 text-label shadow-lift">
+          <div class="fixed z-20 flex w-48 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1 text-label shadow-lift">
             {others.map((c) => (
               <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
                 <input type="hidden" name="status_id" value={c.id} />

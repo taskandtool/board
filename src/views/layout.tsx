@@ -43,7 +43,7 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
                 </a>
               ))}
             </nav>
-            <details class="relative shrink-0">
+            <details data-menu class="relative shrink-0">
               <summary class={"cursor-pointer list-none " + ghost} aria-label="New board" title="New board"><Icon name="plus" /></summary>
               <form method="post" action="/boards" class="fixed inset-x-4 top-14 z-20 flex gap-2 rounded-card border border-line bg-surface p-3 text-label shadow-lift sm:absolute sm:inset-x-auto sm:top-auto sm:left-0 sm:mt-2 sm:w-72">
                 <input name="name" required maxlength={60} placeholder="New board name" class={"w-full " + control} aria-label="New board name" />
@@ -51,7 +51,7 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
               </form>
             </details>
             {user ? (
-              <details class="relative ml-auto shrink-0">
+              <details data-menu class="relative ml-auto shrink-0">
                 <summary class="flex cursor-pointer list-none items-center gap-2 rounded-control py-1 pr-2 pl-1 text-label text-ink-2 hover:bg-panel" title={`Signed in through Task & Tool as ${user}`}>
                   <span class="inline-flex size-7 items-center justify-center rounded-full bg-panel font-semibold text-ink-2" aria-hidden="true">{initials(userName)}</span>
                   <span class="hidden max-w-40 truncate sm:inline">{userName}</span>

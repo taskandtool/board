@@ -80,6 +80,37 @@
     }
   });
 
+  // A menu closes on Escape or a click outside it, and that click does nothing else.
+  const openMenus = () => Array.from(document.querySelectorAll("[data-menu][open]"));
+  document.addEventListener("click", (e) => {
+    const others = openMenus().filter((m) => !m.contains(e.target));
+    if (!others.length) return;
+    others.forEach((m) => { m.open = false; });
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    const open = e.key === "Escape" && openMenus();
+    if (!open || !open.length) return;
+    e.stopPropagation();
+    open.forEach((m) => { m.open = false; });
+    open[0].querySelector("summary").focus();
+  }, true);
+  // A card's menu floats over the column that scrolls under it, above the
+  // button when there is no room below; scrolling closes it.
+  body.addEventListener("toggle", (e) => {
+    if (!e.target.matches("[data-float]") || !e.target.open) return;
+    const panel = e.target.querySelector("summary + *");
+    const at = e.target.querySelector("summary").getBoundingClientRect();
+    panel.style.maxHeight = innerHeight - 16 + "px";
+    const below = at.bottom + 4;
+    panel.style.top = (below + panel.offsetHeight > innerHeight - 8 ? Math.max(8, at.top - panel.offsetHeight - 4) : below) + "px";
+    panel.style.left = Math.max(8, Math.min(at.right, innerWidth - 8) - panel.offsetWidth) + "px";
+  }, true);
+  document.addEventListener("scroll", (e) => {
+    document.querySelectorAll("[data-float][open]").forEach((m) => { if (!m.contains(e.target)) m.open = false; });
+  }, true);
+
   // The composer under a column: opening it puts the cursor in it, Escape
   // closes it, and after a card is added it opens again in the same column
   // for the next one.
