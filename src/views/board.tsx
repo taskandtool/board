@@ -51,7 +51,7 @@ export function BoardView({ data }: { data: BoardData }) {
     >
       <FilterBar data={data} />
       {samples > 0 ? (
-        <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-accent-soft px-3 py-2 text-label text-ink">
+        <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" hx-confirm="Remove the example cards? Anything you added to them goes too." class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-accent-soft px-3 py-2 text-label text-ink">
           <input type="hidden" name="return" value={refresh} />
           <span>The {samples} {samples === 1 ? "card marked example explains" : "cards marked example explain"} the board.</span>
           <button class="tap font-semibold text-accent hover:underline">Remove the examples</button>
@@ -128,7 +128,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
   const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline touch:py-2 " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");
   return (
     <div class="flex flex-wrap items-center gap-2 text-label">
-      <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-replace-url="true" hx-trigger="submit, change, search, input[target.type === 'search'] delay:300ms" class="contents">
+      <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-replace-url="true" hx-sync="this:replace" hx-trigger="submit, change, search, input[target.type === 'search'] delay:300ms" class="contents">
         <label class="relative min-w-0 flex-1 sm:w-64 sm:flex-none">
           <span class="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-ink-3"><Icon name="search" /></span>
           <input id="filter-q" type="search" name="q" value={filters.q ?? ""} placeholder={`Search ${vocab.many.toLowerCase()}`} class={"w-full pl-8 " + control} aria-label="Search" />

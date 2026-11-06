@@ -304,6 +304,21 @@
     if (e.target && e.target.id === "toast") setTimeout(() => { const t = document.getElementById("toast"); if (t) t.replaceChildren(); }, 8000);
   });
 
+  // A search box being typed in keeps what's typed when its results arrive: the server trims it, and more may have come since.
+  let typing = null;
+  body.addEventListener("htmx:beforeSwap", () => {
+    const box = document.activeElement;
+    typing = box && box.id === "filter-q" ? { value: box.value, at: box.selectionStart } : null;
+  });
+  body.addEventListener("htmx:afterSettle", () => {
+    const box = typing && document.getElementById("filter-q");
+    if (!box) return;
+    box.value = typing.value;
+    box.focus();
+    box.setSelectionRange(typing.at, typing.at);
+    typing = null;
+  });
+
   document.addEventListener("DOMContentLoaded", wire);
   if (document.readyState !== "loading") wire();
 })();
