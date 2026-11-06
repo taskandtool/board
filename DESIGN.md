@@ -38,14 +38,15 @@ Controls take their classes from `src/views/ui.ts`; change a control's
 look there, once. `control` is a box that is always a box (filters, the
 composer, a comment). `field` is a value in a card's details: plain text
 until it is pointed at or focused, so an open card reads as a card, not a
-form. `button` is the secondary action, `primary` the one main action,
+form; on a touch screen, which cannot point, it is always a box. A small
+control on a touch screen takes `tap`, which reaches its target to 44px. `button` is the secondary action, `primary` the one main action,
 `ghost` a quiet one. Icons come from `src/views/icons.tsx`, one 16-unit
 grid, never a character standing in for one (no ← × ···).
 
 ## Composition
 
-- The board is a horizontal row of columns; it scrolls sideways on a phone
-  and never widens the page.
+- The board is a horizontal row of columns; it scrolls sideways to the
+  screen's edge on a phone, stopping on a column, and never widens the page.
 - A card shows its title, the line of who and where (the customer and
   any field marked `on_card`), then only the badges that carry
   information: a due date, a priority above normal, tags, a checklist

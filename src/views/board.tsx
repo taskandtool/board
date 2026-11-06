@@ -54,7 +54,7 @@ export function BoardView({ data }: { data: BoardData }) {
         <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-accent-soft px-3 py-2 text-label text-ink">
           <input type="hidden" name="return" value={refresh} />
           <span>The {samples} {samples === 1 ? "card marked example explains" : "cards marked example explain"} the board.</span>
-          <button class="font-semibold text-accent hover:underline">Remove the examples</button>
+          <button class="tap font-semibold text-accent hover:underline">Remove the examples</button>
         </form>
       ) : null}
       {filtering && !items.length ? (
@@ -64,7 +64,7 @@ export function BoardView({ data }: { data: BoardData }) {
       ) : null}
       {/* The board fills the window and each column scrolls on its own, so
           the filters and the column heads stay in view. */}
-      <div class="mt-4 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto pb-4" data-columns>
+      <div class="-mx-4 mt-4 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-4 pb-4 touch:snap-x touch:snap-mandatory touch:scroll-px-4" data-columns>
         {columns.map((col) => {
           const cards = items.filter((i) => i.status_id === col.id);
           const n = counts.get(col.id) ?? 0;
@@ -73,7 +73,7 @@ export function BoardView({ data }: { data: BoardData }) {
           const over = !filtering && col.wip_limit != null && n - examples > col.wip_limit;
           const totals = totalFields.map((f) => cards.reduce((sum, it) => sum + (moneyValue(it.fields[f.key]) ?? 0), 0));
           return (
-            <section class="flex max-h-full min-w-64 max-w-80 flex-1 basis-0 flex-col rounded-card bg-panel" data-status-id={col.id} aria-label={col.label}>
+            <section class="flex max-h-full min-w-64 max-w-80 flex-1 basis-0 flex-col rounded-card bg-panel touch:snap-start" data-status-id={col.id} aria-label={col.label}>
               <header class="flex items-center gap-2 px-3 pt-3 pb-2">
                 <h2 class="font-semibold">{col.label}</h2>
                 <span class={"rounded-full px-2 text-label font-medium " + (over ? "bg-warn text-warn-ink" : "bg-surface text-ink-2")} title={over ? "Over its limit" : col.wip_limit != null ? `Limit ${col.wip_limit}` : undefined}>
@@ -83,7 +83,7 @@ export function BoardView({ data }: { data: BoardData }) {
                 {totals.some((t) => t) ? <span class="ml-auto text-label text-ink-2">{totals.map((t, i) => (totalFields.length > 1 ? `${totalFields[i].label} ` : "") + formatMoney(t)).join(" · ")}</span> : null}
               </header>
               <ol class="flex min-h-10 flex-col gap-2 overflow-y-auto px-2 pb-1" data-cards data-status-id={col.id}>
-                {cards.map((it) => <Card item={it} columns={columns} refresh={refresh} nameOf={data.nameOf} />)}
+                {cards.map((it, i) => <Card item={it} columns={columns} refresh={refresh} nameOf={data.nameOf} first={!filtering && i === 0} last={!filtering && i === cards.length - 1} />)}
               </ol>
               <details class="group/add px-2 pb-2" data-composer={col.id}>
                 <summary class={"mt-1 w-full cursor-pointer list-none text-label group-open/add:hidden " + ghost}><Icon name="plus" />Add {vocab.one.toLowerCase()}</summary>
@@ -125,7 +125,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
   const vocab = words(board);
   const select = (on: boolean) => "shrink-0 " + (on ? control.replace("bg-surface", "bg-accent-soft").replace("border-line-strong", "border-accent") + " text-accent" : control);
   const toggle = "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-line-strong bg-surface px-2.5 py-1.5 shadow-card hover:bg-canvas has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent";
-  const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");
+  const tab = (on: boolean) => "rounded-control px-3 py-1 font-medium no-underline touch:py-2 " + (on ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink");
   return (
     <div class="flex flex-wrap items-center gap-2 text-label">
       <form method="get" action={base} hx-get={base} hx-target={target} hx-swap="outerHTML" hx-replace-url="true" hx-trigger="submit, change, search, input[target.type === 'search'] delay:300ms" class="contents">
@@ -158,7 +158,7 @@ export function FilterBar({ data, list = false, sort, group }: { data: BoardData
               <label class={toggle}><input type="checkbox" name="group" value="1" checked={!!group} class="sr-only" />Group by column</label>
             </>
           ) : null}
-          {filtersActive(filters) ? <a href={base} class={"shrink-0 " + ghost}><Icon name="x" />Clear</a> : null}
+          {filtersActive(filters) ? <a href={base} class={"tap shrink-0 " + ghost}><Icon name="x" />Clear</a> : null}
           <noscript><button class={button}>Apply</button></noscript>
         </div>
       </form>
@@ -179,7 +179,7 @@ export function BoardMenu({ board }: { board: Board }) {
   const link = "flex items-center gap-2 no-underline " + menuItem;
   return (
     <details data-menu class="relative">
-      <summary class={"cursor-pointer list-none px-2 py-1.5 " + ghost} aria-label={`${board.name}: columns, archive, export`} title="Columns, archive, export"><Icon name="more" /></summary>
+      <summary class={"tap cursor-pointer list-none px-2 py-1.5 " + ghost} aria-label={`${board.name}: columns, archive, export`} title="Columns, archive, export"><Icon name="more" /></summary>
       <div class="absolute right-0 z-20 mt-1 flex w-52 flex-col rounded-card border border-line bg-surface p-1 shadow-lift">
         <a href={`${root}/columns`} class={link}><Icon name="columns" class="size-4 text-ink-3" />Board settings</a>
         <a href={`${root}/archive`} class={link}><Icon name="archive" class="size-4 text-ink-3" />Archive</a>
@@ -189,12 +189,14 @@ export function BoardMenu({ board }: { board: Board }) {
   );
 }
 
-export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; columns: Status[]; refresh: string; nameOf: NameOf }) {
+export function Card({ item, columns, refresh, nameOf, first, last }: { item: BoardItem; columns: Status[]; refresh: string; nameOf: NameOf; first: boolean; last: boolean }) {
   const due = dueState(item.due_on, item.completed_at);
   const done = item.checklist.filter((c) => c.done).length;
   const col = columns.find((c) => c.id === item.status_id)!;
   const others = columns.filter((c) => c.id !== item.status_id);
   const face = faceOf(item);
+  // Who has it, with nothing else to show on its row: the row sits right under the title.
+  const onlyWho = !(showsField("due_on") && item.due_on) && !(showsField("priority") && item.priority) && !(showsField("tags") && item.tags.length) && !(showsField("checklist") && item.checklist.length) && !item.file_count && !item.is_sample;
   return (
     <li class="group cursor-pointer rounded-card border border-line bg-surface p-3 shadow-card hover:border-line-strong" data-item-id={item.id} data-status-id={item.status_id} tabindex={0}>
       {item.cover_id ? <img src={`/files/${item.cover_id}?thumb=1`} alt="" loading="lazy" draggable={false} class="-mx-3 -mt-3 mb-3 block h-32 w-[calc(100%+1.5rem)] max-w-none rounded-t-card bg-panel object-cover" /> : null}
@@ -203,7 +205,7 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
           {item.title}
         </a>
         <details data-menu data-float class="-mt-0.5 -mr-1.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 open:opacity-100 touch:opacity-100">
-          <summary class="flex size-6 cursor-pointer list-none items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}><Icon name="more" /></summary>
+          <summary class="tap flex size-6 cursor-pointer list-none items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Actions for ${item.title}`}><Icon name="more" /></summary>
           <div class="fixed z-20 flex w-48 flex-col overflow-y-auto rounded-card border border-line bg-surface p-1 text-label shadow-lift">
             {others.map((c) => (
               <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
@@ -217,13 +219,13 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
               <input type="hidden" name="status_id" value={col.id} />
               <input type="hidden" name="direction" value="up" />
               <input type="hidden" name="return" value={refresh} />
-              <button class={menuItem}>Move up</button>
+              <button class={menuItem} disabled={first}>Move up</button>
             </form>
             <form method="post" action={`/items/${item.id}/move`} hx-post={`/items/${item.id}/move`} hx-target="#board" hx-swap="outerHTML">
               <input type="hidden" name="status_id" value={col.id} />
               <input type="hidden" name="direction" value="down" />
               <input type="hidden" name="return" value={refresh} />
-              <button class={menuItem}>Move down</button>
+              <button class={menuItem} disabled={last}>Move down</button>
             </form>
             <form method="post" action={`/items/${item.id}/archive`} hx-post={`/items/${item.id}/archive`} hx-target="#board" hx-swap="outerHTML">
               <input type="hidden" name="return" value={refresh} />
@@ -233,7 +235,7 @@ export function Card({ item, columns, refresh, nameOf }: { item: BoardItem; colu
         </details>
       </div>
       {face.length ? <p class="mt-1 text-label text-ink-3">{face.join(" · ")}</p> : null}
-      <div class="mt-3 flex flex-wrap items-center gap-1.5 text-label empty:hidden">
+      <div class={(onlyWho ? "" : "mt-3") + " flex flex-wrap items-center gap-1.5 text-label empty:hidden"}>
         {showsField("due_on") && item.due_on ? <DueBadge due={item.due_on} state={due} /> : null}
         {showsField("priority") ? <PriorityBadge priority={item.priority} /> : null}
         {showsField("tags") ? item.tags.map((t) => <TagBadge tag={t} />) : null}
@@ -288,7 +290,7 @@ export function Toast({ message, undo }: { message: string; undo?: { url: string
             <button class="underline">Undo</button>
           </form>
         ) : null}
-        <button type="button" class="text-night-ink-2" aria-label="Dismiss" onclick="this.closest('[data-toast]').remove()">×</button>
+        <button type="button" class="tap text-night-ink-2" aria-label="Dismiss" onclick="this.closest('[data-toast]').remove()"><Icon name="x" /></button>
       </div>
     </div>
   );

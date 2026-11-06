@@ -92,7 +92,7 @@ export function ItemView({ data }: { data: ItemData }) {
               <Property label="Tags" top>
                 <div class="flex flex-wrap items-center gap-1.5 px-2 py-1">
                   {cfg.tags.map((t) => (
-                    <label class={"cursor-pointer select-none border border-dashed border-line-strong text-ink-3 hover:text-ink has-[:checked]:border-transparent has-[:checked]:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent " + `has-[:checked]:bg-${t.role} ` + badge}>
+                    <label class={"cursor-pointer select-none border border-dashed border-line-strong touch:py-1 text-ink-3 hover:text-ink has-[:checked]:border-transparent has-[:checked]:text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent " + `has-[:checked]:bg-${t.role} ` + badge}>
                       <input type="checkbox" name={`tag:${t.name}`} value="1" checked={item.tags.some((x) => x.toLowerCase() === t.name.toLowerCase())} class="sr-only" />{t.name}
                     </label>
                   ))}
@@ -221,14 +221,14 @@ function Checklist({ item }: { item: Item }) {
             <form method="post" action={url} hx-post={url} hx-trigger="change" class="flex items-center">
               <input type="hidden" name="action" value="toggle" />
               <input type="hidden" name="index" value={i} />
-              <input type="checkbox" checked={c.done} aria-label={c.text} />
+              <label class="tap flex"><input type="checkbox" checked={c.done} aria-label={c.text} /></label>
               <noscript><button class="ml-2 text-label underline">{c.done ? "Undo" : "Done"}</button></noscript>
             </form>
             <span class={"min-w-0 flex-1 " + (c.done ? "text-ink-3 line-through" : "")}>{c.text}</span>
             <form method="post" action={url} hx-post={url} class="opacity-0 group-hover/step:opacity-100 group-focus-within/step:opacity-100 touch:opacity-100">
               <input type="hidden" name="action" value="remove" />
               <input type="hidden" name="index" value={i} />
-              <button class="flex size-6 items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Remove ${c.text}`}><Icon name="x" /></button>
+              <button class="tap flex size-6 items-center justify-center rounded-control text-ink-3 hover:bg-panel hover:text-ink" aria-label={`Remove ${c.text}`}><Icon name="x" /></button>
             </form>
           </li>
         ))}
@@ -294,7 +294,7 @@ function Files({ item, files }: { item: Item; files: ItemFile[] }) {
                 </a>
               )}
               <form method="post" action={`/files/${f.id}/remove`} hx-post={`/files/${f.id}/remove`} hx-confirm={`Remove ${f.name} from this card?`} class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100">
-                <button class="flex size-6 items-center justify-center rounded-control bg-surface text-ink-2 shadow-card hover:text-ink" aria-label={`Remove ${f.name}`}><Icon name="x" /></button>
+                <button class="tap flex size-6 items-center justify-center rounded-control bg-surface text-ink-2 shadow-card hover:text-ink" aria-label={`Remove ${f.name}`}><Icon name="x" /></button>
               </form>
             </li>
           ))}

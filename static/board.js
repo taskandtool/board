@@ -24,9 +24,14 @@
         delayOnTouchOnly: true,
         filter: "button, input, details, summary",
         preventOnFilter: false,
-        onStart() { window.boardBusy = true; },
+        onStart() {
+          window.boardBusy = true;
+          // A column that snaps would fight the drag's own scrolling.
+          document.querySelector("[data-columns]").style.scrollSnapType = "none";
+        },
         onEnd(evt) {
           window.boardBusy = false;
+          document.querySelector("[data-columns]").style.scrollSnapType = "";
           const card = evt.item;
           const statusId = evt.to.dataset.statusId;
           const next = card.nextElementSibling;
@@ -79,6 +84,11 @@
       post({ status_id: to.dataset.statusId });
     }
   });
+
+  // The current board's tab is in view, however many boards come before it.
+  const tabs = document.getElementById("board-tabs");
+  const current = tabs && tabs.querySelector("[aria-current]");
+  if (current) tabs.scrollLeft = current.offsetLeft - tabs.offsetLeft;
 
   // A menu closes on Escape or a click outside it, and that click does nothing else.
   const openMenus = () => Array.from(document.querySelectorAll("[data-menu][open]"));

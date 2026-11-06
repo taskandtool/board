@@ -77,6 +77,39 @@ if (!url) {
     await pool.query("delete from items where id = $1", [it.id]); // the next test counts its column
   });
 
+  test("a moved example stays an example, a retitled one is real, and removal counts what the board showed", async (t) => {
+    if (!(await scratch(t))) return;
+    const board = await Q.createBoard(pool, "Examples");
+    const [to, other] = await Q.statuses(pool, board.id);
+    const make = async (title: string) => (await pool.query<{ id: number }>("insert into items (board_id, status_id, title, position, is_sample) values ($1, $2, $3, 0, true) returning id", [board.id, to.id, title])).rows[0].id;
+    const moved = await make("moved"), retitled = await make("retitled"), archived = await make("archived");
+    assert.equal((await Q.moveItem(pool, moved, { statusId: other.id }, "t@x")).item.is_sample, true);
+    assert.equal((await Q.updateItem(pool, retitled, { title: "a real job" }, "t@x")).is_sample, false);
+    await Q.archiveItem(pool, archived, "t@x");
+    assert.equal(await Q.sampleCount(pool, board.id), 1);
+    assert.equal(await Q.removeSamples(pool, board.id), 1);
+    assert.deepEqual((await Q.items(pool, board.id)).map((i) => i.title), ["a real job"]);
+    assert.equal(await Q.deleteBoard(pool, board.id), true);
+  });
+
+  test("everyone with a card can be assigned; a comment is its author's; the only board stays", async (t) => {
+    if (!(await scratch(t))) return;
+    const [board] = await Q.boards(pool);
+    const it = await Q.createItem(pool, board.id, { title: "who", assignee: "maria@team.example" }, "t@x");
+    assert.ok((await Q.assignees(pool)).includes("maria@team.example"));
+    await Q.comment(pool, it.id, "first", "ann@x");
+    const row = (await Q.activity(pool, it.id)).find((a) => a.kind === "comment")!;
+    assert.equal(await Q.editComment(pool, row.id, "not mine", "bob@x"), null);
+    assert.equal(await Q.editComment(pool, row.id, "changed", "ann@x"), it.id);
+    assert.equal((await Q.activity(pool, it.id)).find((a) => a.kind === "comment")!.body, "changed");
+    assert.equal(await Q.removeComment(pool, row.id, "bob@x"), null);
+    assert.equal(await Q.removeComment(pool, row.id, "ann@x"), it.id);
+    assert.equal((await Q.activity(pool, it.id)).some((a) => a.kind === "comment"), false);
+    await pool.query("delete from items where id = $1", [it.id]);
+    const others = (await Q.boards(pool)).filter((b) => b.id !== board.id);
+    if (!others.length) assert.equal(await Q.deleteBoard(pool, board.id), false, "the only board");
+  });
+
   test("a move renumbers both columns, keeps completed_at honest, and can be undone", async (t) => {
     if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
@@ -155,12 +188,12 @@ if (!url) {
     assert.ok(s.overdue >= 1);
   });
 
-  test("editing records what changed and drops the example mark; filters find by tag, assignee and search", async (t) => {
+  test("editing records what changed and keeps the example mark until the title changes; filters find by tag, assignee and search", async (t) => {
     if (!(await scratch(t))) return;
     const [board] = await Q.boards(pool);
     const sample = (await Q.items(pool, board.id)).find((i) => i.is_sample)!;
     const u = await Q.updateItem(pool, sample.id, { tags: ["Client"], assignee: "Sam@Example.com".toLowerCase(), title: sample.title }, "t@x");
-    assert.equal(u.is_sample, false);
+    assert.equal(u.is_sample, true, "following an example's instructions does not make it real");
     const act = (await Q.activity(pool, sample.id))[0];
     assert.equal(act.kind, "edited");
     assert.match(act.body!, /assignee/);

@@ -54,3 +54,11 @@
 /* Outside the layers, so it outranks the padding utilities on a control:
    room for the chevron. */
 select { padding-right: 1.75rem; }
+
+/* On a touch screen a small control reaches past its edges, to about 44px,
+   without taking more room on the page. */
+@media (pointer: coarse) {
+  .tap { position: relative; }
+  .tap::after { content: ""; position: absolute; inset: -0.625rem; }
+  input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+}

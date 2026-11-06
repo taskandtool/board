@@ -70,12 +70,12 @@ export function ColumnsView({ board, columns, counts, deletable }: { board: Boar
                   <input id={`col-${c.id}-label`} name="label" value={c.label} required maxlength={40} class={"w-full " + control} aria-label="Column name" />
                   <span class="text-ink-2"><span class="sm:hidden">{vocab.many}: </span>{held}</span>
                   <input id={`col-${c.id}-limit`} type="number" name="wip_limit" value={c.wip_limit ?? ""} min={1} max={999} placeholder="None" class={"w-20 sm:w-full " + control} aria-label="Limit" />
-                  <label class="flex items-center gap-1.5"><input id={`col-${c.id}-done`} type="checkbox" name="is_done" value="1" checked={c.is_done} aria-label="Counts as done" /><span class="sm:hidden">Done</span></label>
+                  <label class="tap flex items-center gap-1.5"><input id={`col-${c.id}-done`} type="checkbox" name="is_done" value="1" checked={c.is_done} aria-label="Counts as done" /><span class="sm:hidden">Done</span></label>
                   <span class="ml-auto flex items-center justify-end gap-1">
                     <noscript><button class={button}>Save</button></noscript>
                     <button formaction={`/columns/${c.id}/move`} name="direction" value="left" class={iconButton} disabled={i === 0} aria-label={`Move ${c.label} earlier`} title="Move earlier"><Icon name="back" /></button>
                     <button formaction={`/columns/${c.id}/move`} name="direction" value="right" class={iconButton} disabled={i === columns.length - 1} aria-label={`Move ${c.label} later`} title="Move later"><Icon name="back" class="size-4 rotate-180" /></button>
-                    <button formaction={`/columns/${c.id}/archive`} class={"ml-1 " + ghost + " disabled:cursor-not-allowed disabled:hover:bg-transparent"} disabled={held > 0 || columns.length <= 1} title={held > 0 ? "Move its cards first" : `Remove ${c.label}`}>Remove</button>
+                    <button formaction={`/columns/${c.id}/archive`} class={"tap ml-1 " + ghost + " disabled:cursor-not-allowed disabled:hover:bg-transparent"} disabled={held > 0 || columns.length <= 1} title={held > 0 ? "Move its cards first" : `Remove ${c.label}`}>Remove</button>
                   </span>
                 </form>
               </li>

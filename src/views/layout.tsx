@@ -38,13 +38,13 @@ export function Layout({ title, shell, children }: { title: string; shell: Shell
           <div class="flex h-14 items-center gap-3 px-4">
             <nav id="board-tabs" aria-label="Boards" class="-ml-1 flex min-w-0 items-center gap-1 overflow-x-auto">
               {boards.map((b) => (
-                <a href={`/b/${b.key}`} class={"shrink-0 rounded-control px-3 py-1.5 font-medium no-underline " + (board?.id === b.id ? "bg-panel text-ink" : "text-ink-2 hover:bg-panel hover:text-ink")} aria-current={board?.id === b.id ? "page" : undefined}>
+                <a href={`/b/${b.key}`} title={b.name} class={"max-w-40 shrink-0 truncate rounded-control px-3 py-1.5 font-medium no-underline sm:max-w-none " + (board?.id === b.id ? "bg-panel text-ink" : "text-ink-2 hover:bg-panel hover:text-ink")} aria-current={board?.id === b.id ? "page" : undefined}>
                   {b.name}
                 </a>
               ))}
             </nav>
             <details data-menu class="relative shrink-0">
-              <summary class={"cursor-pointer list-none " + ghost} aria-label="New board" title="New board"><Icon name="plus" /></summary>
+              <summary class={"tap cursor-pointer list-none " + ghost} aria-label="New board" title="New board"><Icon name="plus" /></summary>
               <form method="post" action="/boards" class="fixed inset-x-4 top-14 z-20 flex gap-2 rounded-card border border-line bg-surface p-3 text-label shadow-lift sm:absolute sm:inset-x-auto sm:top-auto sm:left-0 sm:mt-2 sm:w-72">
                 <input name="name" required maxlength={60} placeholder="New board name" class={"w-full " + control} aria-label="New board name" />
                 <button class={primary}>Add</button>
