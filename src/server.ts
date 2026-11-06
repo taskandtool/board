@@ -5,7 +5,7 @@
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
-import app from "./app";
+import app, { notFound } from "./app";
 import { machineRuntime, start } from "./db/client";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -13,6 +13,7 @@ const runtime = machineRuntime();
 const server = new Hono();
 server.use("/*", serveStatic({ root: "./static" }));
 server.route("/", app);
+server.notFound(notFound);
 
 serve({ fetch: (req) => server.fetch(req, { runtime }), port, hostname: "0.0.0.0" }, (info) => {
   console.log(`board listening on http://localhost:${info.port}`);

@@ -13,6 +13,7 @@ import { ItemView } from "./views/item";
 import { Layout, type Shell } from "./views/layout";
 import { ListView, sortItems, type Sort } from "./views/list";
 import { namer } from "./views/people";
+import { primary } from "./views/ui";
 import type { AppEnv, Runtime } from "./runtime";
 
 type C = Context<AppEnv>;
@@ -503,7 +504,24 @@ app.post("/files/:id/remove", async (c) => {
   return itemView(c, item);
 });
 
-app.notFound((c) => c.text("Not found", 404));
+// A page in the app's own frame, with the way back. Exported for dev's server,
+// which holds the app inside its own Hono and answers unmatched paths itself.
+export async function notFound(c: Context) {
+  const page = await shell(c as C, null, "archive");
+  const home = page.boards[0] ? `/b/${page.boards[0].key}` : "/";
+  return c.html(
+    <Layout title="Not found" shell={page}>
+      <div class="mx-auto mt-16 flex max-w-md flex-col items-center gap-3 text-center">
+        <h1 class="text-title font-semibold">There is no page here</h1>
+        <p class="text-ink-2">The link may be old, or the board or card may be gone.</p>
+        <a href={home} class={"mt-2 no-underline " + primary}>Back to the board</a>
+      </div>
+    </Layout>,
+    404,
+  );
+}
+
+app.notFound(notFound);
 app.onError((e, c) => {
   console.error(e);
   return c.text(e instanceof Error ? e.message : "Something went wrong", 500);
