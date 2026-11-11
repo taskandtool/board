@@ -12,7 +12,7 @@ the owner's to change.
 For "shape this board", "add a job", "what needs attention", "import my
 spreadsheet", "publish it": the `board` skill (the levers, the loop, the
 scripts). Read it before changing the board rather than working from
-memory. The `data` skill holds the project database's rules; read it before
+memory. The `database` skill holds the project database's rules; read it before
 adding a table or a migration.
 
 ## Commands
@@ -84,7 +84,7 @@ npm run check                                          # "check: ok", or exit 1 
   stay `boards`, `statuses`, `items`, `item_files`, `activity`, `people`. A
   new column is a new numbered migration, never an edit to an old one (an
   applied file never runs again); the rest of the table rules are the
-  `data` skill's.
+  `database` skill's.
 - Identity comes from the platform. Task & Tool sets `X-TaskTool-User` from
   a signed-in team member; the board builds no login. Identity names who did
   what; it never gates an edit. Whoever can open the board can change it, and

@@ -42,7 +42,7 @@ Everything a business wants changed is in one of these.
    nothing.
 
 3. **A migration**, for a field that deserves a real column (indexed,
-   constrained, joined on), following the `data` skill's table rules.
+   constrained, joined on), following the `database` skill's table rules.
    Write `migrations/000N_<words>.sql` with the next number, every
    statement safe to re-run:
 
