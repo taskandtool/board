@@ -6,7 +6,7 @@ import { openPool } from "../src/db/pool";
 import { migrate } from "../src/db/migrate";
 import { seed } from "../src/db/seed";
 import * as Q from "../src/db/queries";
-import { parseArgs, plain as plainUsage, done, fail, misused } from "../src/data/cli.mjs";
+import { askForDatabase, parseArgs, plain as plainUsage, done, fail, misused } from "../src/data/cli.mjs";
 
 const script = (process.argv[1] ?? "").split("/").pop()?.replace(/\.(ts|mjs)$/, "") ?? "";
 
@@ -27,13 +27,12 @@ export function report(json: boolean, data: unknown, what: string, opts: Paramet
   else done(where, what, opts);
 }
 
-const ASK_DB = "python3 ~/tools/taskandtool.py request-database";
 
 // The pool, migrated and seeded (both safe to re-run, and every command reads
 // the schema they make). Any database error ends here, on stderr with a Try.
 export async function withDb<T>(fn: (pool: pg.Pool, applied: string[]) => Promise<T>): Promise<T> {
   const url = databaseUrl();
-  if (!url) fail(`${at}: DATABASE_URL is not set, so this app has no database yet (off Task & Tool, set it in the environment)`, ASK_DB);
+  if (!url) fail(`${at}: DATABASE_URL is not set, so this app has no database yet (off Task & Tool, set it in the environment)`, askForDatabase());
   const pool = openPool(url);
   try {
     const applied = await migrate(pool);
@@ -41,7 +40,7 @@ export async function withDb<T>(fn: (pool: pg.Pool, applied: string[]) => Promis
     return await fn(pool, applied);
   } catch (e) {
     const err = e as Error & { code?: string };
-    if (["28P01", "28000", "3D000"].includes(err.code ?? "")) fail(`${at}: the database refused this app's login (${err.code}): ${err.message}`, ASK_DB);
+    if (["28P01", "28000", "3D000"].includes(err.code ?? "")) fail(`${at}: the database refused this app's login (${err.code}): ${err.message}`, askForDatabase());
     if (/^E[A-Z]+$/.test(err.code ?? "") || /Connection terminated|timeout exceeded/i.test(err.message)) fail(`${at}: cannot reach the database: ${err.message || err.code}`, rerunWith());
     fail(`${at}: ${err.message || String(e)}`, `node scripts/${script}.mjs --help`);
   } finally {
