@@ -1,5 +1,7 @@
 # Board
 
+[![Deploy on Task & Tool](https://taskandtool.com/images/deploy-button.svg)](https://taskandtool.com/accounts/register?starter_app=board)
+
 A kanban board for jobs, listings, candidates, client projects and tickets. Three columns out of the box (To do,
 Doing, Done), a card per item, drag between columns, a list view, and a
 record of who did what. It works as soon as it is installed. To change
