@@ -6,6 +6,8 @@ projects. The agent names the columns and card fields in your words.
 
 [![Deploy on Task & Tool](https://taskandtool.com/images/deploy-button.svg)](https://taskandtool.com/accounts/register?starter_app=board)
 
+![Northline Gardens' Okafor backyard board, with the Lay the patio card open beside it](https://taskandtool.com/images/starter-apps/board.webp)
+
 It's made to run on Task & Tool. There, each app has its own computer for
 your AI agent. The project has a Postgres database for the boards and cards.
 The agent uses the skill and scripts in this repo to set your columns and
@@ -17,6 +19,8 @@ built with Hono, htmx and Tailwind.
 Click the button above, or pick Work Board when you create an app on [Task &
 Tool](https://taskandtool.com/starter-apps/board). Then ask the agent in the
 chat to set up the board for your business.
+
+See it in use on the [Work Board page](https://taskandtool.com/starter-apps/board).
 
 ## Features
 
@@ -36,6 +40,8 @@ Call link. The agent starts from the closest of three worked examples:
 
 It also sets your time zone. A card due Friday is overdue from Saturday in
 your time zone.
+
+![Northline Gardens' board for the Okafor backyard. Lay the patio is under Build](https://taskandtool.com/images/marketing/northline-gardens-board-okafor.webp)
 
 ### Ask the agent what needs attention
 
@@ -63,6 +69,8 @@ card, up to 10 MB a file. Photos are made smaller in your browser before
 they upload. Their location data is removed. The first photo is the card's
 cover. Files are stored in the database. A backup of the database includes
 them.
+
+<img src="https://taskandtool.com/images/marketing/northline-gardens-board-card-plain.webp" width="300" alt="The Lay the patio card: column Build, assigned to Marco, due October 29, tagged Stone, for Grace Okafor">
 
 ### Drag, filter and export
 
