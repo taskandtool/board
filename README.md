@@ -6,7 +6,7 @@ projects. The agent names the columns and card fields in your words.
 
 [![Deploy on Task & Tool](https://taskandtool.com/images/deploy-button.svg)](https://taskandtool.com/accounts/register?starter_app=board)
 
-![Northline Gardens' Okafor backyard board, with the Lay the patio card open beside it](https://taskandtool.com/images/starter-apps/board.webp)
+![Northline Gardens' Okafor backyard board and its Lay the patio card](https://taskandtool.com/images/starter-apps/board.webp)
 
 It's made to run on Task & Tool. There, each app has its own computer for
 your AI agent. The project has a Postgres database for the boards and cards.
@@ -20,7 +20,8 @@ Click the button above, or pick Work Board when you create an app on [Task &
 Tool](https://taskandtool.com/starter-apps/board). Then ask the agent in the
 chat to set up the board for your business.
 
-See it in use on the [Work Board page](https://taskandtool.com/starter-apps/board).
+See it in use on the [Work Board
+page](https://taskandtool.com/starter-apps/board).
 
 ## Features
 
@@ -45,11 +46,12 @@ your time zone.
 
 ### Ask the agent what needs attention
 
-The agent lists cards that are overdue, due today or marked urgent. It also lists columns over their limit and cards in progress that
-haven't changed in three days. When you ask for a summary, the agent tells you how many
-cards are in each column and how many are overdue, due this week or finished
-in the last seven days. You can also ask it to add a card, move one, assign
-it to someone or add a note.
+The agent lists cards that are overdue, due today or marked urgent. It also
+lists columns over their limit and cards in progress that haven't changed in
+three days. When you ask for a summary, the agent tells you how many cards
+are in each column and how many are overdue, due this week or finished in
+the last seven days. You can also ask it to add a card, move one, assign it
+to someone or add a note.
 
 ### Several boards in one app
 
