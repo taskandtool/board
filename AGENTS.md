@@ -5,7 +5,7 @@ candidates, client projects, tickets. Columns per board, a card per item,
 drag between columns, a list view, a record of who did what. It runs in
 **dev** on this machine and in **production** on Cloudflare once
 deployed. This repository *is* the app: the code at the root, the skills
-that know how to work on it in `.claude/skills/`, and `.taskandtool/setup.sh`
+for working on it in `.claude/skills/`, and `.taskandtool/setup.sh`
 for what the machine needs (dependencies, the `web` service). All of it is
 the owner's to change.
 
@@ -22,7 +22,7 @@ than one board, `add`, `archive-done`, `import` and `export` need `--board`.
 
 ```bash
 node scripts/cards.mjs add "title" [--board key] ...  # "cards add: #12 Smith roof on Work, in To do"
-node scripts/cards.mjs show <id>                      # the card whole: notes, checklist, files, its history
+node scripts/cards.mjs show <id>                      # the whole card: notes, checklist, files, its history
 node scripts/cards.mjs edit <id> --due 2026-10-20     # title, due, assignee, priority, tags, notes, fields
 node scripts/cards.mjs move <id> <column>             # "cards move: #12 Smith roof, To do → Doing"
 node scripts/cards.mjs note <id> "text"               # a comment on the card
@@ -80,7 +80,7 @@ npm run check                                          # "check: ok", or exit 1 
 
 ## Rules
 
-- The customer's words for things live in `board.config.json`; the tables
+- The customer's words for things are in `board.config.json`; the tables
   stay `boards`, `statuses`, `items`, `item_files`, `activity`, `people`. A
   new column is a new numbered migration, never an edit to an old one (an
   applied file never runs again); the rest of the table rules are the
@@ -96,6 +96,6 @@ npm run check                                          # "check: ok", or exit 1 
   AI-written text.
 - Real data only. The example cards are marked and removable; never invent
   items, people or history to make the board look busy.
-- The first deploy opens production to the team; making it public is the
-  owner's switch, a board never needs it, and a public board is editable by
-  anyone with the link.
+- The first deploy opens production to the team. Only the owner makes it
+  public. A board never needs to be public: anyone with the link can edit
+  a public board.

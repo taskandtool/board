@@ -53,7 +53,7 @@ export function BoardView({ data }: { data: BoardData }) {
       {samples > 0 ? (
         <form method="post" action={`${base}/samples/remove`} hx-post={`${base}/samples/remove`} hx-target="#board" hx-swap="outerHTML" hx-confirm="Remove the example cards? Anything you added to them goes too." class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card bg-accent-soft px-3 py-2 text-label text-ink">
           <input type="hidden" name="return" value={refresh} />
-          <span>The {samples} {samples === 1 ? "card marked example explains" : "cards marked example explain"} the board.</span>
+          <span>Read the {samples} {samples === 1 ? "card" : "cards"} marked example to see how the board works.</span>
           <button class="tap font-semibold text-accent hover:underline">Remove the examples</button>
         </form>
       ) : null}

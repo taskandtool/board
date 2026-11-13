@@ -31,8 +31,8 @@ that, and only when the column is empty.
   `assignee`, `priority`, `tags`, `checklist`, `customer_ref`.
 - `card.custom[]` adds fields without a migration:
   `{ "key": "crew", "label": "Crew", "type": "select", "options": ["North", "South"] }`
-  (types `text`, `number`, `money`, `phone`, `date`, `select`). They live
-  in `items.fields` as JSON and show on the open card, in CSV, and in the
+  (types `text`, `number`, `money`, `phone`, `date`, `select`). They are
+  stored in `items.fields` as JSON and show on the open card, in CSV, and in the
   scripts (`--field crew=North`). `"on_card": true` puts one on the card
   face and in the list, after the customer: pick the one or two a person
   scans for (an address, a quote). A `money` field on the face totals
@@ -42,9 +42,8 @@ that, and only when the column is empty.
 - `default_view` (`board` or `list`) and `archive_done_after_days` (when
   finished cards are suggested for archiving; `0` turns that off).
 - `time_zone`, an IANA name (`America/Chicago`). Due dates are dates, not
-  instants, so "overdue" and "due today" are judged in this zone; it ships
-  as `UTC`, and setting it is part of shaping. The machine's clock never
-  decides.
+  instants: "overdue" and "due today" are judged in this zone, not the
+  machine's. It ships as `UTC`; set it when shaping.
 - `business` is one line about the business. It ships as `to fill`;
-  writing the real line also retires the "Set up the board for my
+  writing the real line also removes the "Set up the board for my
   business" suggestion.

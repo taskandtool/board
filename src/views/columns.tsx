@@ -112,7 +112,7 @@ export function ArchiveView({ board, items, columns, archiveAfter, archived }: {
   const vocab = words(board);
   return (
     <div class="mx-auto flex max-w-3xl flex-col gap-6">
-      <PageHead board={board} title="Archive">Archived {vocab.many.toLowerCase()} leave the board and wait here. Restore one and it goes back to its column.</PageHead>
+      <PageHead board={board} title="Archive">Archived {vocab.many.toLowerCase()} are off the board. Restore one to put it back in its column.</PageHead>
       <form method="post" action={`${base}/archive-done`} class={card + " flex flex-wrap items-center gap-2 p-4 text-label"}>
         <span>Archive finished {vocab.many.toLowerCase()} older than</span>
         <input type="number" name="days" value={archiveAfter} min={0} max={3650} class={"w-20 " + control} aria-label="Days" />
@@ -146,10 +146,10 @@ export function WaitingView({ state, error }: { state: string; error: string }) 
     <html lang="en">
       <head><meta charset="utf-8" /><meta http-equiv="refresh" content="5" /><title>Board</title><link rel="stylesheet" href={asset("/board.css")} /></head>
       <body class="min-h-screen bg-canvas p-8 text-ink font-body text-copy">
-        <h1 class="text-title font-semibold">The board is waiting for its database</h1>
+        <h1 class="text-title font-semibold">Waiting for the database</h1>
         <p class="mt-2 max-w-xl text-ink-2">
           {state === "no-url"
-            ? "DATABASE_URL is not set yet. On Task & Tool the project's Postgres is being set up and this page refreshes on its own; off Task & Tool, set DATABASE_URL to a Postgres connection string in the environment and restart."
+            ? "DATABASE_URL is not set yet. On Task & Tool, the project's Postgres is being set up. This page refreshes on its own. Off Task & Tool, set DATABASE_URL to a Postgres connection string in the environment and restart."
             : state === "error"
               ? `The database did not answer yet: ${error}. Retrying.`
               : "Connecting and applying migrations."}

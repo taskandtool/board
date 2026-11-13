@@ -39,7 +39,7 @@ look there, once. `control` is a box that is always a box (filters, the
 composer, a comment). `field` is a value in a card's details: plain text
 until it is pointed at or focused, so an open card reads as a card, not a
 form; on a touch screen, which cannot point, it is always a box. A small
-control on a touch screen takes `tap`, which reaches its target to 44px. `button` is the secondary action, `primary` the one main action,
+control on a touch screen takes `tap`: a 44px target. `button` is the secondary action, `primary` the one main action,
 `ghost` a quiet one. Icons come from `src/views/icons.tsx`, one 16-unit
 grid, never a character standing in for one (no ← × ···).
 
