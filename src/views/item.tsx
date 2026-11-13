@@ -149,7 +149,7 @@ export function ItemView({ data }: { data: ItemData }) {
               </div>
             </div>
           </form>
-          <p id="comment-hint" class="sr-only">Ctrl or Command and Enter posts it.</p>
+          <p id="comment-hint" class="sr-only">Press Ctrl or Command and Enter to post.</p>
           <ol id="activity" class="flex flex-col gap-4">
             {foldEdits(activity).map((a) => (
               a.kind === "comment" ? (

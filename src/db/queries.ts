@@ -464,7 +464,7 @@ export async function fileData(q: Q, id: number, thumb: boolean): Promise<{ name
 // Files onto a card, all or none: one too large refuses the lot, naming it.
 // A preview that is not a small image is dropped; the card shows the file.
 export async function addFiles(q: Q, itemId: number, list: NewFile[], who: string | null): Promise<ItemFile[]> {
-  if (!list.length) throw new Error("no file came with that");
+  if (!list.length) throw new Error("no file was attached");
   const big = list.find((f) => f.bytes.length > MAX_FILE_BYTES);
   if (big) throw new Error(`${cleanFileName(big.name)} is ${formatSize(big.bytes.length)}; a file can be ${formatSize(MAX_FILE_BYTES)} at most`);
   const added: ItemFile[] = [];

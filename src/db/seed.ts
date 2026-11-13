@@ -8,9 +8,9 @@ import { cfg } from "../config";
 
 const EXAMPLES = [
   { col: 0, title: "Click a card to open it", notes: "Each card is one piece of work. Open it to add notes, a due date, who it's assigned to, a priority, tags, a checklist and comments. Only the title is required." },
-  { col: 0, title: "Drag a card to another column", notes: "Try it with this one; on a phone, press and hold it first. The dots on a card open the same moves as a menu. The card's history shows every move and who made it." },
-  { col: 1, title: "Change the columns to fit your work", notes: "Open Board settings from the menu at the top right to add, rename and reorder columns and name what a card is. Give a column a limit and its count turns yellow when it has too many cards. You can still add more." },
-  { col: 1, title: "Ask the AI to update the board", notes: "In chat, try \"add a job for the Smith roof, due Friday\" or \"what's overdue?\". Ask it to set the board up for your business and it changes the columns, the names and the fields on each card." },
+  { col: 0, title: "Drag a card to another column", notes: "Try it with this one. On a phone, press and hold it first. You can also click the dots on a card for the same moves. Under Activity you can see every move and who made it." },
+  { col: 1, title: "Change the columns to fit your work", notes: "Open Board settings from the menu at the top right to add, rename and reorder columns and choose what to call a card. You can give a column a limit. When it has more cards than that, its count is yellow. You can still add more." },
+  { col: 1, title: "Ask the AI to update the board", notes: "In chat, try \"add a job for the Smith roof, due Friday\" or \"what's overdue?\". Ask it to set the board up for your business. It can change the columns, the names and the fields on each card." },
   { col: 2, title: "Remove these examples", notes: "Click Remove the examples, above the board. All five go at once." },
 ];
 

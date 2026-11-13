@@ -35,7 +35,7 @@ export function ColumnsView({ board, columns, counts, deletable }: { board: Boar
   return (
     <div id="columns" data-saves class="mx-auto flex max-w-3xl flex-col gap-6" hx-target="#columns" hx-select="#columns" hx-swap="outerHTML">
       <PageHead board={board} title="Board settings">
-        Columns are the steps each {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once; going over it shows a warning. Cards in a done column count as finished.
+        Columns are the steps each {vocab.one.toLowerCase()} moves through. A limit is how many a column should hold at once. You see a warning on a column with more cards than its limit. Cards in a done column count as finished.
       </PageHead>
 
       {/* The new name is in the header's board tabs too. */}
