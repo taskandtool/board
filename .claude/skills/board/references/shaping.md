@@ -37,8 +37,7 @@ that, and only when the column is empty.
   face and in the list, after the customer: pick the one or two a person
   scans for (an address, a quote). A `money` field on the face totals
   each column; the top-level `currency` (ISO code, default `USD`) sets its
-  symbol. A
-  `phone` field gets a Call link.
+  symbol. A `phone` field gets a Call link.
 - `default_view` (`board` or `list`) and `archive_done_after_days` (when
   finished cards are suggested for archiving; `0` turns that off).
 - `time_zone`, an IANA name (`America/Chicago`). Due dates are dates, not

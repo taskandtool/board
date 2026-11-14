@@ -1,6 +1,6 @@
 ---
 name: board
-description: "Shapes and runs this work board. Use for 'shape this board for my business', 'add a job', 'move it to done', 'what needs attention', 'import my spreadsheet', 'add a column', 'publish it', and any change to its config, columns, schema, dev server or production."
+description: "Shapes and runs this work board. Use when the owner says 'shape this board for my business', 'add a job', 'move it to done', 'what needs attention', 'import my spreadsheet', 'add a column', 'publish it', or asks for any change to its config, columns, schema, dev server or production."
 ---
 
 # Board
@@ -58,8 +58,8 @@ Everything a business wants changed is in one of these.
 
 `node scripts/cards.mjs` (commands in `AGENTS.md`, everything in
 `--help`). A spreadsheet to import: [references/import.md](references/import.md).
-A photo sent in chat goes onto a card with `cards.mjs attach`; `show`
-lists a card's files and how to fetch one to look at.
+Put a photo sent in chat onto a card with `cards.mjs attach`. `cards.mjs
+show` lists a card's files and how to fetch one to look at.
 
 ## Dev, on this machine
 
@@ -84,12 +84,12 @@ The team works on the board in production, on the database dev shares.
 1. `npm run check` and `npm test` pass.
 2. Open the board in dev and look at what changed: a board, a card's
    drawer, the list view.
-3. A migration is already on the shared database once dev restarted, so
-   production's current code must work with it until the deploy.
+3. Once dev restarts, a migration is already on the shared database.
+   Production's current code must work with it until the deploy.
 
 Then `npm run deploy`: it prints production's address; open it and check a
-board. Code and `board.config.json` wait for a deploy; cards and
-migrations do not.
+board. Changes to code and `board.config.json` reach production only with
+a deploy; cards and migrations reach it at once.
 
 A person's name on the board is `people.name`, which each person sets at
 the top right; until then it comes from their email (`maria.lopez@` shows
